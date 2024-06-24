@@ -10,7 +10,6 @@ export class CustomCursor {
 
     init() {
         document.addEventListener('mousemove', (e) => this.onMouseMove(e));
-        document.getElementById('toggle-cursor-lock').addEventListener('click', () => this.toggleLock());
     }
 
     onMouseMove(e) {
@@ -33,12 +32,8 @@ export class CustomCursor {
 
     toggleLock() {
         this.isLocked = !this.isLocked;
-
-        if (this.isLocked) {
-            this.lockCursor();
-        } else {
-            this.unlockCursor();
-        }
+        this.isLocked ? this.lockCursor() : this.unlockCursor();
+        window.debugTerminal.log(`Cursor ${this.isLocked ? 'locked' : 'unlocked'}`)
     }
 
     lockCursor() {

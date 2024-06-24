@@ -7,6 +7,7 @@ export class Terminal {
         this.terminalOutput = document.getElementById('terminal-output');
         this.isDragging = false;
         this.offset = { x: 0, y: 0 };
+        this.cursorPrevLocked = false;
 
         this.init();
     }
@@ -46,11 +47,16 @@ export class Terminal {
     openTerminal() {
         this.terminal.style.display = 'block';
         this.open = true;
+        this.cursorPrevLocked = window.cursor.isLocked;
+        window.cursor.unlockCursor();
     }
 
     closeTerminal() {
         this.terminal.style.display = 'none';
         this.open = false;
+        if (this.cursorPrevLocked) {
+            window.cursor.lockCursor();
+        }
     }
 
     startDrag(e) {
