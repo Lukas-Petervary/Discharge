@@ -157,7 +157,7 @@ function onKeyDown(event) {
         case 16: // Shift (sprint)
             isSprinting = true;
             break;
-        case 17: // Ctrl (crouch)
+        case 67: // C (crouch)
             isCrouching = true;
             break;
     }
@@ -183,7 +183,7 @@ function onKeyUp(event) {
         case 16: // Shift (sprint)
             isSprinting = false;
             break;
-        case 17: // Ctrl (crouch)
+        case 67: // C (crouch)
             isCrouching = false;
             break;
     }
