@@ -1,4 +1,4 @@
-// Initialize Three.js variables
+// Initialize Three.js variables and constants
 let scene, camera, renderer, capsule;
 let mouseX = 0, mouseY = 0;
 let targetX = 0, targetY = 0;
@@ -20,6 +20,9 @@ let canJump = true;
 let standingHeight = 1.8; // Standing height of the capsule
 let crouchingHeight = 1.0;
 
+// Quaternion to manage camera rotation
+const cameraQuaternion = new THREE.Quaternion();
+
 // Call the init function once the DOM is fully loaded
 document.addEventListener('DOMContentLoaded', init);
 
@@ -29,7 +32,7 @@ function init() {
 
     // Create a camera
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 1.8, 0); // Initial position (adjust height for eye level)
+    camera.position.set(0, standingHeight, 0); // Initial position (adjust height for eye level)
 
     // Create a WebGL renderer
     renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -40,17 +43,17 @@ function init() {
     const groundGeometry = new THREE.PlaneGeometry(20, 20);
     const groundMaterial = new THREE.MeshBasicMaterial({ color: 0x808080, side: THREE.DoubleSide });
     const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-    ground.rotation.x = Math.PI / 2; // Rotate to be horizontal
+    ground.rotation.x = -Math.PI / 2; // Rotate to be horizontal
     scene.add(ground);
 
     // Create a capsule shape using CylinderGeometry and SphereGeometry
     const capsuleGeometry = new THREE.BufferGeometry();
 
-    const cylinderGeometry = new THREE.CylinderGeometry(0.5, 0.5, 1.8, 32); // Adjust dimensions for character
+    const cylinderGeometry = new THREE.CylinderGeometry(0.5, 0.5, standingHeight, 32); // Adjust dimensions for character
     const sphereGeometry = new THREE.SphereGeometry(0.5, 32, 16);
 
     // Position and merge geometries to create the capsule shape
-    cylinderGeometry.translate(0, 0.9, 0); // Adjust position for character
+    cylinderGeometry.translate(0, standingHeight / 2 - 0.5, 0); // Adjust position for character
     sphereGeometry.translate(0, 0.5, 0); // Adjust position for character
 
     capsuleGeometry.merge(cylinderGeometry);
@@ -91,18 +94,14 @@ function init() {
 function animate() {
     requestAnimationFrame(animate);
 
-    // Update camera rotation based on mouse movement
-    targetX = mouseX * 0.001;
-    targetY = mouseY * 0.001;
+    // Smoothly interpolate rotation towards target angles
+    const deltaRotationQuaternion = new THREE.Quaternion()
+        .setFromEuler(new THREE.Euler(targetY, -1*targetX, 0, 'YXZ'))
+        .multiply(cameraQuaternion);
 
-    // Smoothly interpolate camera rotation towards target angles
-    camera.rotation.y += (targetX - camera.rotation.y) * 0.1; // Adjust smoothing factor as needed
-    camera.rotation.x += (-targetY - camera.rotation.x) * 0.1;
+    capsule.quaternion.rotateTowards(deltaRotationQuaternion, 0.05); // Adjust rotation speed here
 
-    // Update capsule rotation based on camera rotation
-    capsule.rotation.y = camera.rotation.y;
-
-    // Update camera position based on keyboard movement
+    // Update capsule position based on keyboard movement
     const moveDirection = new THREE.Vector3();
     if (moveForward) moveDirection.z = -1;
     if (moveBackward) moveDirection.z = 1;
@@ -120,34 +119,22 @@ function animate() {
     // Limit camera rotation vertically
     camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
 
-    if (isJumping && canJump) {
-        capsule.position.y += jumpSpeed;
-        canJump = false;
-    }
-    if (capsule.position.y <= 0) {
-        capsule.position.y = 0; // Snap to ground level
-        canJump = true;
-    } else {
-        const gravity = -0.01;
-        capsule.position.y += gravity;
-    }
+    // Handle jumping and gravity
+    handleJump();
 
-    if (isCrouching) {
-        capsule.scale.y = 0.5; // Scale down capsule height
-        capsule.position.y = crouchingHeight / 2; // Adjust position when crouching
-    } else {
-        capsule.scale.y = 1; // Reset to full height
-        capsule.position.y = standingHeight / 2; // Adjust position when standing
-    }
-
+    // Adjust capsule height and position based on crouching
+    handleCrouch();
 
     // Render the scene
     renderer.render(scene, camera);
 }
 
 function onMouseMove(event) {
-    mouseX -= event.movementX;
-    mouseY += event.movementY;
+    mouseX += event.movementX * 0.002;
+    mouseY += event.movementY * 0.002;
+
+    targetY = Math.PI / 2 - mouseY;
+    targetX = -Math.PI + mouseX;
 }
 
 function onKeyDown(event) {
@@ -173,7 +160,6 @@ function onKeyDown(event) {
         case 17: // Ctrl (crouch)
             isCrouching = true;
             break;
-
     }
 }
 
@@ -200,7 +186,6 @@ function onKeyUp(event) {
         case 17: // Ctrl (crouch)
             isCrouching = false;
             break;
-
     }
 }
 
@@ -209,4 +194,28 @@ function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function handleJump() {
+    if (isJumping && canJump) {
+        capsule.position.y += jumpSpeed;
+        canJump = false;
+    }
+    if (capsule.position.y <= 0) {
+        capsule.position.y = 0; // Snap to ground level
+        canJump = true;
+    } else {
+        const gravity = -0.01;
+        capsule.position.y += gravity;
+    }
+}
+
+function handleCrouch() {
+    if (isCrouching) {
+        capsule.scale.y = 0.5; // Scale down capsule height
+        capsule.position.y = crouchingHeight / 2; // Adjust position when crouching
+    } else {
+        capsule.scale.y = 1; // Reset to full height
+        capsule.position.y = standingHeight / 2; // Adjust position when standing
+    }
 }
