@@ -3,6 +3,7 @@ export class Terminal {
         this.open = false;
         this.terminal = document.getElementById('terminal');
         this.closeBtn = document.getElementById('close-terminal-btn');
+        this.terminalInput = document.getElementById('terminal-input');
         this.terminalOutput = document.getElementById('terminal-output');
         this.isDragging = false;
         this.offset = { x: 0, y: 0 };
@@ -13,6 +14,7 @@ export class Terminal {
     init() {
         document.addEventListener('keydown', (e) => this.handleKeydown(e));
         this.closeBtn.addEventListener('click', () => this.closeTerminal());
+        this.terminalInput.addEventListener('keydown', (e) => this.handleInput(e));
 
         this.terminal.querySelector('.terminal-header').addEventListener('mousedown', (e) => this.startDrag(e));
         document.addEventListener('mousemove', (e) => this.drag(e));
@@ -25,6 +27,21 @@ export class Terminal {
             else this.openTerminal();
         }
     }
+
+    handleInput(e) {
+        if (e.key === 'Enter') {
+            const code = this.terminalInput.value;
+            this.terminalInput.value = '';
+
+            try {
+                eval(code);
+                this.log(`> ${code}`);
+            } catch (err) {
+                this.log(`> ${code}\nError: ${err.message}`);
+            }
+        }
+    }
+
 
     openTerminal() {
         this.terminal.style.display = 'block';

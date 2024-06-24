@@ -14,6 +14,9 @@
         <script type="module" src="src/render/render.js"></script>
         <script type="module" src="src/client/player.js"></script>
 
+        <div id="custom-cursor"></div>
+        <button id="toggle-cursor-lock">Toggle Cursor Lock</button>
+
         <div id="terminal" class="terminal">
             <div class="terminal-header">
                 <span>Terminal</span>
@@ -21,6 +24,9 @@
             </div>
             <div class="terminal-body">
                 <pre id="terminal-output"></pre>
+            </div>
+            <div class="terminal-input">
+                <input id="terminal-input" type="text" placeholder=">_">
             </div>
         </div>
 
