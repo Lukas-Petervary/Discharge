@@ -1,7 +1,7 @@
 export class Terminal {
     constructor() {
+        this.open = false;
         this.terminal = document.getElementById('terminal');
-        this.openBtn = document.getElementById('open-terminal-btn');
         this.closeBtn = document.getElementById('close-terminal-btn');
         this.terminalOutput = document.getElementById('terminal-output');
         this.isDragging = false;
@@ -11,7 +11,7 @@ export class Terminal {
     }
 
     init() {
-        this.openBtn.addEventListener('click', () => this.openTerminal());
+        document.addEventListener('keydown', (e) => this.handleKeydown(e));
         this.closeBtn.addEventListener('click', () => this.closeTerminal());
 
         this.terminal.querySelector('.terminal-header').addEventListener('mousedown', (e) => this.startDrag(e));
@@ -19,12 +19,21 @@ export class Terminal {
         document.addEventListener('mouseup', () => this.stopDrag());
     }
 
+    handleKeydown(e) {
+        if (e.key === '`') {
+            if (this.open) this.closeTerminal();
+            else this.openTerminal();
+        }
+    }
+
     openTerminal() {
         this.terminal.style.display = 'block';
+        this.open = true;
     }
 
     closeTerminal() {
         this.terminal.style.display = 'none';
+        this.open = false;
     }
 
     startDrag(e) {
@@ -47,11 +56,19 @@ export class Terminal {
     }
 
     log(message) {
-        this.terminalOutput.textContent += `${message}\n`;
+        const { fileName, lineNumber } = this.getCallerInfo();
+        this.terminalOutput.textContent += `[${fileName}:${lineNumber}] ${message}\n`;
         this.terminalOutput.scrollTop = this.terminalOutput.scrollHeight;
     }
-}
 
-document.addEventListener('DOMContentLoaded', () => {
-    window.debugTerminal = new DebugTerminal();
-});
+    getCallerInfo() {
+        const error = new Error();
+        const stackLines = error.stack.split('\n');
+        const callerLine = stackLines[3].trim();
+        const match = callerLine.match(/(\/[^/]+\/[^/]+):(\d+):\d+/);
+        if (match) {
+            return { fileName: match[1], lineNumber: match[2] };
+        }
+        return { fileName: 'unknown', lineNumber: 'unknown' };
+    }
+}
