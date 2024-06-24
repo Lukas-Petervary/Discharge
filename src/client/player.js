@@ -6,11 +6,19 @@ const windowHalfX = window.innerWidth / 2;
 const windowHalfY = window.innerHeight / 2;
 
 // Movement variables
+const jumpSpeed = 0.2;
+const sprintMultiplier = 2;
 const moveSpeed = 0.1;
 let moveForward = false;
 let moveBackward = false;
 let moveLeft = false;
 let moveRight = false;
+let isJumping = false;
+let isCrouching = false;
+let isSprinting = false;
+let canJump = true;
+let standingHeight = 1.8; // Standing height of the capsule
+let crouchingHeight = 1.0;
 
 // Call the init function once the DOM is fully loaded
 document.addEventListener('DOMContentLoaded', init);
@@ -54,6 +62,7 @@ function init() {
     // Create a mesh and add it to the scene
     capsule = new THREE.Mesh(capsuleGeometry, capsuleMaterial);
     scene.add(capsule);
+    capsule.add(camera);
 
     // Hide mouse cursor and lock it within the viewport
     document.body.requestPointerLock = document.body.requestPointerLock || document.body.mozRequestPointerLock || document.body.webkitRequestPointerLock;
@@ -82,12 +91,16 @@ function init() {
 function animate() {
     requestAnimationFrame(animate);
 
-    // Update camera position based on mouse movement
+    // Update camera rotation based on mouse movement
     targetX = mouseX * 0.001;
     targetY = mouseY * 0.001;
 
-    camera.rotation.y += (targetX - camera.rotation.y) * 0.05;
-    camera.rotation.x += (-targetY - camera.rotation.x) * 0.05;
+    // Smoothly interpolate camera rotation towards target angles
+    camera.rotation.y += (targetX - camera.rotation.y) * 0.1; // Adjust smoothing factor as needed
+    camera.rotation.x += (-targetY - camera.rotation.x) * 0.1;
+
+    // Update capsule rotation based on camera rotation
+    capsule.rotation.y = camera.rotation.y;
 
     // Update camera position based on keyboard movement
     const moveDirection = new THREE.Vector3();
@@ -96,18 +109,44 @@ function animate() {
     if (moveLeft) moveDirection.x = -1;
     if (moveRight) moveDirection.x = 1;
 
-    moveDirection.applyQuaternion(camera.quaternion);
-    camera.position.add(moveDirection.multiplyScalar(moveSpeed));
+    moveDirection.applyQuaternion(capsule.quaternion);
+    if (isSprinting) {
+        moveDirection.multiplyScalar(moveSpeed * sprintMultiplier);
+    } else {
+        moveDirection.multiplyScalar(moveSpeed);
+    }
+    capsule.position.add(moveDirection);
 
     // Limit camera rotation vertically
     camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
+
+    if (isJumping && canJump) {
+        capsule.position.y += jumpSpeed;
+        canJump = false;
+    }
+    if (capsule.position.y <= 0) {
+        capsule.position.y = 0; // Snap to ground level
+        canJump = true;
+    } else {
+        const gravity = -0.01;
+        capsule.position.y += gravity;
+    }
+
+    if (isCrouching) {
+        capsule.scale.y = 0.5; // Scale down capsule height
+        capsule.position.y = crouchingHeight / 2; // Adjust position when crouching
+    } else {
+        capsule.scale.y = 1; // Reset to full height
+        capsule.position.y = standingHeight / 2; // Adjust position when standing
+    }
+
 
     // Render the scene
     renderer.render(scene, camera);
 }
 
 function onMouseMove(event) {
-    mouseX += event.movementX;
+    mouseX -= event.movementX;
     mouseY += event.movementY;
 }
 
@@ -125,6 +164,16 @@ function onKeyDown(event) {
         case 68: // D
             moveRight = true;
             break;
+        case 32: // Spacebar (jump)
+            if (canJump) isJumping = true;
+            break;
+        case 16: // Shift (sprint)
+            isSprinting = true;
+            break;
+        case 17: // Ctrl (crouch)
+            isCrouching = true;
+            break;
+
     }
 }
 
@@ -142,6 +191,16 @@ function onKeyUp(event) {
         case 68: // D
             moveRight = false;
             break;
+        case 32: // Spacebar (jump)
+            isJumping = false;
+            break;
+        case 16: // Shift (sprint)
+            isSprinting = false;
+            break;
+        case 17: // Ctrl (crouch)
+            isCrouching = false;
+            break;
+
     }
 }
 

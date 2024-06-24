@@ -1,4 +1,8 @@
 import ConnectionManager from './networking/ConnectionManager.js';
+import { Terminal } from "./terminal/Terminal.js";
 
-const connection = new ConnectionManager();
+window.debugTerminal = new Terminal();
+window.connection = new ConnectionManager();
 connection.initialize();
+
+window.debugTerminal.log('loaded terminal!');
