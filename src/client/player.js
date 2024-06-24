@@ -6,7 +6,7 @@ const windowHalfX = window.innerWidth / 2;
 const windowHalfY = window.innerHeight / 2;
 
 // Movement variables
-const jumpSpeed = 4;
+const jumpSpeed = 2;
 const sprintMultiplier = 2;
 const moveSpeed = 0.1;
 let moveForward = false;
