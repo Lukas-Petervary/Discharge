@@ -54,7 +54,7 @@ function init() {
     // Create a mesh and add it to the scene
     capsule = new THREE.Mesh(capsuleGeometry, capsuleMaterial);
     scene.add(capsule);
-
+    capsule.add(camera);
     // Hide mouse cursor and lock it within the viewport
     document.body.requestPointerLock = document.body.requestPointerLock || document.body.mozRequestPointerLock || document.body.webkitRequestPointerLock;
     document.exitPointerLock = document.exitPointerLock || document.mozExitPointerLock || document.webkitExitPointerLock;
@@ -96,18 +96,17 @@ function animate() {
     if (moveLeft) moveDirection.x = -1;
     if (moveRight) moveDirection.x = 1;
 
-    moveDirection.applyQuaternion(camera.quaternion);
-    camera.position.add(moveDirection.multiplyScalar(moveSpeed));
+    moveDirection.applyQuaternion(capsule.quaternion);
+    capsule.position.add(moveDirection.multiplyScalar(moveSpeed));
 
     // Limit camera rotation vertically
-    camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
 
     // Render the scene
     renderer.render(scene, camera);
 }
 
 function onMouseMove(event) {
-    mouseX += event.movementX;
+    mouseX -= event.movementX;
     mouseY += event.movementY;
 }
 
