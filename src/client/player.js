@@ -67,6 +67,29 @@ function init() {
     scene.add(capsule);
     capsule.add(camera);
 
+    const textureLoader = new THREE.TextureLoader();
+    const texture = textureLoader.load('assets/terrain/SkySkybox.png');
+
+    // Create a sphere geometry for the skybox
+    const skyboxGeometry = new THREE.SphereGeometry(500, 60, 40); // Adjust size and segments as needed
+
+    // Invert the sphere geometry to render texture inside
+    skyboxGeometry.scale(-1, 1, 1);
+
+    // Create a material with the sky texture
+    const skyboxMaterial = new THREE.MeshBasicMaterial({ map: texture });
+
+    // Create the skybox mesh
+    const skybox = new THREE.Mesh(skyboxGeometry, skyboxMaterial);
+
+    // Ensure the skybox is behind other objects
+    skybox.renderOrder = -Infinity;
+    skybox.material.side = THREE.BackSide; // Show the inside of the sphere
+
+    // Add the skybox to the capsule (assuming it's the parent for first-person view)
+    capsule.add(skybox);
+
+
     // Hide mouse cursor and lock it within the viewport
     document.body.requestPointerLock = document.body.requestPointerLock || document.body.mozRequestPointerLock || document.body.webkitRequestPointerLock;
     document.exitPointerLock = document.exitPointerLock || document.mozExitPointerLock || document.webkitExitPointerLock;
