@@ -6,7 +6,7 @@ const windowHalfX = window.innerWidth / 2;
 const windowHalfY = window.innerHeight / 2;
 
 // Movement variables
-const jumpSpeed = 0.2;
+const jumpSpeed = 4;
 const sprintMultiplier = 2;
 const moveSpeed = 0.1;
 let moveForward = false;
@@ -18,7 +18,7 @@ let isCrouching = false;
 let isSprinting = false;
 let canJump = true;
 let standingHeight = 1.8; // Standing height of the capsule
-let crouchingHeight = 1.0;
+let crouchingHeight = .5;
 
 // Quaternion to manage camera rotation
 const cameraQuaternion = new THREE.Quaternion();
@@ -32,7 +32,7 @@ function init() {
 
     // Create a camera
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, standingHeight, 0); // Initial position (adjust height for eye level)
+    camera.position.set(0, standingHeight-.2, 0); // Initial position (adjust height for eye level)
 
     // Create a WebGL renderer
     renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -200,13 +200,13 @@ function handleJump() {
     if (isJumping && canJump) {
         capsule.position.y += jumpSpeed;
         canJump = false;
+    } else {
+        const gravity = -0.01;
+        capsule.position.y += gravity;
     }
     if (capsule.position.y <= 0) {
         capsule.position.y = 0; // Snap to ground level
         canJump = true;
-    } else {
-        const gravity = -0.01;
-        capsule.position.y += gravity;
     }
 }
 
