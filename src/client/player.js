@@ -55,6 +55,7 @@ function init() {
     capsule = new THREE.Mesh(capsuleGeometry, capsuleMaterial);
     scene.add(capsule);
     capsule.add(camera);
+
     // Hide mouse cursor and lock it within the viewport
     document.body.requestPointerLock = document.body.requestPointerLock || document.body.mozRequestPointerLock || document.body.webkitRequestPointerLock;
     document.exitPointerLock = document.exitPointerLock || document.mozExitPointerLock || document.webkitExitPointerLock;
@@ -82,12 +83,16 @@ function init() {
 function animate() {
     requestAnimationFrame(animate);
 
-    // Update camera position based on mouse movement
+    // Update camera rotation based on mouse movement
     targetX = mouseX * 0.001;
     targetY = mouseY * 0.001;
 
-    camera.rotation.y += (targetX - camera.rotation.y) * 0.05;
-    camera.rotation.x += (-targetY - camera.rotation.x) * 0.05;
+    // Smoothly interpolate camera rotation towards target angles
+    camera.rotation.y += (targetX - camera.rotation.y) * 0.1; // Adjust smoothing factor as needed
+    camera.rotation.x += (-targetY - camera.rotation.x) * 0.1;
+
+    // Update capsule rotation based on camera rotation
+    capsule.rotation.y = camera.rotation.y;
 
     // Update camera position based on keyboard movement
     const moveDirection = new THREE.Vector3();
@@ -100,6 +105,7 @@ function animate() {
     capsule.position.add(moveDirection.multiplyScalar(moveSpeed));
 
     // Limit camera rotation vertically
+    camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
 
     // Render the scene
     renderer.render(scene, camera);
