@@ -1,0 +1,50 @@
+body {
+    font-family: Arial, sans-serif;
+}
+
+#open-terminal-btn {
+    margin: 20px;
+}
+
+.terminal {
+    display: none;
+    position: absolute;
+    width: 400px;
+    height: 300px;
+    background-color: #000;
+    color: #fff;
+    border: 2px solid #333;
+    border-radius: 5px;
+    z-index: 1000;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.terminal-header {
+    background-color: #333;
+    padding: 5px;
+    cursor: move;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.terminal-header span {
+    margin-left: 10px;
+}
+
+.terminal-header button {
+    background-color: #f00;
+    border: none;
+    color: #fff;
+    padding: 5px;
+    cursor: pointer;
+    margin-right: 5px;
+}
+
+.terminal-body {
+    padding: 10px;
+    height: calc(100% - 30px);
+    overflow-y: auto;
+    white-space: pre-wrap;
+    font-family: monospace;
+}
