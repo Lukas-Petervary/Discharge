@@ -1,7 +1,5 @@
 // rendererUtils.js
 
-import * as THREE from 'three';
-
 // Global variables for scene, camera, renderer, and an array to hold objects
 let scene, camera, renderer, objects = [];
 
