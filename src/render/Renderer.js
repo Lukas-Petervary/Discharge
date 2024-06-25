@@ -43,6 +43,10 @@ export class Renderer {
         // Ensure the skybox is rendered on the inside of the sphere
         skybox.material.side = THREE.BackSide;
     }
+
+    render() {
+        this.sceneRenderer.render(this.scene, this.camera);
+    }
 }
 
 export { Shape, Cube, Sphere, Cylinder, Capsule };
