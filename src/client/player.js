@@ -51,8 +51,6 @@ export function createChar() {
 }
 
 export function movement() {
-    requestAnimationFrame(animate);
-
     // Smoothly interpolate rotation towards target angles
     const deltaRotationQuaternion = new THREE.Quaternion()
         .setFromEuler(new THREE.Euler(targetY, -1 * targetX, 0, 'YXZ'))
