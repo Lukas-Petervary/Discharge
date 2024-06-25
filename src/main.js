@@ -9,3 +9,4 @@ window.connection = new ConnectionManager();
 connection.initialize();
 
 window.debugTerminal.log('loaded terminal!');
+
