@@ -1,3 +1,5 @@
+import { Capsule } from "./Renderer.js";
+
 export class World {
     constructor(renderer) {
         this.renderer = renderer;

@@ -8,7 +8,6 @@ import { createChar, movement } from "./client/player.js";
 window.debugTerminal = new Terminal();
 window.cursor = new CustomCursor();
 
-
 window.renderer = new Renderer();
 renderer.camera.position.set(0, 1.5, 2);
 
