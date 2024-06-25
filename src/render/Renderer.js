@@ -1,7 +1,9 @@
+
 export class Renderer {
     constructor() {
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        this.camera.position.set(0, 1, 0);
         this.sceneRenderer = new THREE.WebGLRenderer({ antialias: true });
 
         this.objects = [];
@@ -177,7 +179,7 @@ class Capsule extends Shape {
         cylinderGeometry.translate(0, this.height / 2, 0); // Place cylinder in the middle
 
         // Merge geometries
-        const capsuleGeometry = new THREE.Geometry();
+        const capsuleGeometry = new THREE.BufferGeometry();
         capsuleGeometry.merge(sphereGeometry);
         capsuleGeometry.merge(cylinderGeometry);
 

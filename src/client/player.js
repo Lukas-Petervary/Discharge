@@ -1,5 +1,3 @@
-import { Renderer, Capsule } from "../render/Renderer.js";
-
 // Initialize Three.js variables and constants
 let mouseX = 0, mouseY = 0;
 let targetX = 0, targetY = 0;
@@ -16,18 +14,17 @@ let isJumping = false;
 let isCrouching = false;
 let isSprinting = false;
 let canJump = true;
-let standingHeight = 1.8; // Standing height of the capsule
+let standingHeight = 1.8; // Standing height of the playerBody
 let crouchingHeight = .5;
 
 export function createChar() {
+
     // Quaternion to manage camera rotation
     const cameraQuaternion = new THREE.Quaternion();
 
-    Renderer.camera.position.set(0, standingHeight - .2, 0); // Initial position (adjust height for eye level)
-
-    var playerBody = new Capsule();
-    playerBody.addToScene(renderer.scene);
-    playerBody.add(camera);
+    window.renderer.camera.position.set(0, standingHeight - .2, 0); // Initial position (adjust height for eye level)
+    let playerBody = window.world.addCapsule(.5, .5,standingHeight, 32,32,{ x: 0, y: 5, z: 0 });
+    playerBody.add(window.renderer.camera);
 
 // Hide mouse cursor and lock it within the viewport
     document.body.requestPointerLock = document.body.requestPointerLock || document.body.mozRequestPointerLock || document.body.webkitRequestPointerLock;
@@ -56,30 +53,30 @@ export function movement() {
         .setFromEuler(new THREE.Euler(targetY, -1 * targetX, 0, 'YXZ'))
         .multiply(cameraQuaternion);
 
-    capsule.quaternion.rotateTowards(deltaRotationQuaternion, 0.05); // Adjust rotation speed here
+    playerBody.quaternion.rotateTowards(deltaRotationQuaternion, 0.05); // Adjust rotation speed here
 
-    // Update capsule position based on keyboard movement
+    // Update playerBody position based on keyboard movement
     const moveDirection = new THREE.Vector3();
     if (moveForward) moveDirection.z = -1;
     if (moveBackward) moveDirection.z = 1;
     if (moveLeft) moveDirection.x = -1;
     if (moveRight) moveDirection.x = 1;
 
-    moveDirection.applyQuaternion(capsule.quaternion);
+    moveDirection.applyQuaternion(playerBody.quaternion);
     if (isSprinting) {
         moveDirection.multiplyScalar(moveSpeed * sprintMultiplier);
     } else {
         moveDirection.multiplyScalar(moveSpeed);
     }
-    capsule.position.add(moveDirection);
+    playerBody.position.add(moveDirection);
 
     // Limit camera rotation vertically
-    camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
+    Window.camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
 
     // Handle jumping and gravity
     handleJump();
 
-    // Adjust capsule height and position based on crouching
+    // Adjust playerBody height and position based on crouching
     handleCrouch();
 }
 
@@ -152,24 +149,24 @@ function onWindowResize() {
 
 function handleJump() {
     if (isJumping && canJump) {
-        capsule.position.y += jumpSpeed;
+        playerBody.position.y += jumpSpeed;
         canJump = false;
     } else {
         const gravity = -0.01;
-        capsule.position.y += gravity;
+        playerBody.position.y += gravity;
     }
-    if (capsule.position.y <= 0) {
-        capsule.position.y = 0; // Snap to ground level
+    if (playerBody.position.y <= 0) {
+        playerBody.position.y = 0; // Snap to ground level
         canJump = true;
     }
 }
 
 function handleCrouch() {
     if (isCrouching) {
-        capsule.scale.y = 0.5; // Scale down capsule height
-        capsule.position.y = crouchingHeight / 2; // Adjust position when crouching
+        playerBody.scale.y = 0.5; // Scale down playerBody height
+        playerBody.position.y = crouchingHeight / 2; // Adjust position when crouching
     } else {
-        capsule.scale.y = 1; // Reset to full height
-        capsule.position.y = standingHeight / 2; // Adjust position when standing
+        playerBody.scale.y = 1; // Reset to full height
+        playerBody.position.y = standingHeight / 2; // Adjust position when standing
     }
 }

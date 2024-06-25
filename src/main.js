@@ -3,7 +3,7 @@ import { Terminal } from "./terminal/Terminal.js";
 import { CustomCursor } from "./terminal/Cursor.js";
 import { Renderer } from "./render/Renderer.js";
 import { World } from "./render/World.js";
-import { createChar, movement } from "./client/player";
+import { createChar, movement } from "./client/player.js";
 
 window.debugTerminal = new Terminal();
 window.cursor = new CustomCursor();
