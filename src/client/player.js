@@ -27,7 +27,7 @@ export function createChar() {
 
     var playerBody = new Capsule();
     playerBody.addToScene(renderer.scene);
-    capsule.add(camera);
+    playerBody.add(camera);
 
 // Hide mouse cursor and lock it within the viewport
     document.body.requestPointerLock = document.body.requestPointerLock || document.body.mozRequestPointerLock || document.body.webkitRequestPointerLock;
@@ -50,12 +50,12 @@ export function createChar() {
     window.addEventListener('resize', onWindowResize);
 }
 
-function movement() {
+export function movement() {
     requestAnimationFrame(animate);
 
     // Smoothly interpolate rotation towards target angles
     const deltaRotationQuaternion = new THREE.Quaternion()
-        .setFromEuler(new THREE.Euler(targetY, -1*targetX, 0, 'YXZ'))
+        .setFromEuler(new THREE.Euler(targetY, -1 * targetX, 0, 'YXZ'))
         .multiply(cameraQuaternion);
 
     capsule.quaternion.rotateTowards(deltaRotationQuaternion, 0.05); // Adjust rotation speed here
@@ -83,9 +83,6 @@ function movement() {
 
     // Adjust capsule height and position based on crouching
     handleCrouch();
-
-    // Render the scene
-    renderer.render(scene, camera);
 }
 
 function onMouseMove(event) {
