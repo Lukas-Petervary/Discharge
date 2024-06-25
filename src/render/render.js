@@ -6,7 +6,7 @@ import * as THREE from 'three';
 let scene, camera, renderer, objects = [];
 
 // Initialize the Three.js scene, camera, and renderer
-export function initScene() {
+export function createScene() {
     // Create a scene
     scene = new THREE.Scene();
 
