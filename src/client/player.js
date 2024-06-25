@@ -30,8 +30,12 @@ function init() {
     // Create a scene
     scene = new THREE.Scene();
 
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); // soft white light
+    scene.add(ambientLight);
+
     // Create a camera
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.far = 10000;
     camera.position.set(0, standingHeight-.2, 0); // Initial position (adjust height for eye level)
 
     // Create a WebGL renderer
@@ -45,6 +49,28 @@ function init() {
     const ground = new THREE.Mesh(groundGeometry, groundMaterial);
     ground.rotation.x = -Math.PI / 2; // Rotate to be horizontal
     scene.add(ground);
+
+    const skyGeometry = new THREE.SphereGeometry(1000, 25, 25);
+
+// Load the texture using TextureLoader
+    const textureLoader = new THREE.TextureLoader();
+    const texture = textureLoader.load('../../assets/terrain/SkySkybox.png');
+
+// Create a Phong material for the skybox with the loaded texture
+    const skyMaterial = new THREE.MeshPhongMaterial({
+        map: texture
+    });
+
+// Create the skybox mesh
+    const skybox = new THREE.Mesh(skyGeometry, skyMaterial);
+
+// Ensure the skybox is rendered on the inside of the sphere
+    skybox.material.side = THREE.BackSide;
+
+// Add the skybox to the scene
+    scene.add(skybox);
+
+
 
     // Create a capsule shape using CylinderGeometry and SphereGeometry
     const capsuleGeometry = new THREE.BufferGeometry();
@@ -66,29 +92,6 @@ function init() {
     capsule = new THREE.Mesh(capsuleGeometry, capsuleMaterial);
     scene.add(capsule);
     capsule.add(camera);
-
-    const textureLoader = new THREE.TextureLoader();
-    const texture = textureLoader.load('assets/terrain/SkySkybox.png');
-
-    // Create a sphere geometry for the skybox
-    const skyboxGeometry = new THREE.SphereGeometry(500, 60, 40); // Adjust size and segments as needed
-
-    // Invert the sphere geometry to render texture inside
-    skyboxGeometry.scale(-1, 1, 1);
-
-    // Create a material with the sky texture
-    const skyboxMaterial = new THREE.MeshBasicMaterial({ map: texture });
-
-    // Create the skybox mesh
-    const skybox = new THREE.Mesh(skyboxGeometry, skyboxMaterial);
-
-    // Ensure the skybox is behind other objects
-    skybox.renderOrder = -Infinity;
-    skybox.material.side = THREE.BackSide; // Show the inside of the sphere
-
-    // Add the skybox to the capsule (assuming it's the parent for first-person view)
-    capsule.add(skybox);
-
 
     // Hide mouse cursor and lock it within the viewport
     document.body.requestPointerLock = document.body.requestPointerLock || document.body.mozRequestPointerLock || document.body.webkitRequestPointerLock;
@@ -206,7 +209,7 @@ function onKeyUp(event) {
         case 16: // Shift (sprint)
             isSprinting = false;
             break;
-        case 67: // C (crouch)
+        case 67: // Ctrl (crouch)
             isCrouching = false;
             break;
     }
