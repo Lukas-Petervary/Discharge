@@ -21,7 +21,7 @@ body {
     color: #fff;
     border: 2px solid #333;
     border-radius: 5px;
-    z-index: 1000;
+    z-index: 999;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
     font-family: Calibri, sans-serif;
 }
@@ -76,6 +76,7 @@ body {
     border: none;
     color: #fff;
     background-color: #555;
+    text-indent: 10px;
 }
 
 #custom-cursor {
@@ -86,10 +87,5 @@ body {
     border-radius: 50%;
     pointer-events: none;
     transition: transform 0.01s;
-}
-
-button {
-    position: absolute;
-    top: 20px;
-    left: 20px;
+    z-index: 1000;
 }
