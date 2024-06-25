@@ -1,9 +1,8 @@
+import { Renderer, Capsule } from "../render/Renderer.js";
+
 // Initialize Three.js variables and constants
-let scene, camera, renderer, capsule;
 let mouseX = 0, mouseY = 0;
 let targetX = 0, targetY = 0;
-const windowHalfX = window.innerWidth / 2;
-const windowHalfY = window.innerHeight / 2;
 
 // Movement variables
 const jumpSpeed = 2;
@@ -20,80 +19,17 @@ let canJump = true;
 let standingHeight = 1.8; // Standing height of the capsule
 let crouchingHeight = .5;
 
-// Quaternion to manage camera rotation
-const cameraQuaternion = new THREE.Quaternion();
+export function createChar() {
+    // Quaternion to manage camera rotation
+    const cameraQuaternion = new THREE.Quaternion();
 
-// Call the init function once the DOM is fully loaded
-document.addEventListener('DOMContentLoaded', init);
+    Renderer.camera.position.set(0, standingHeight - .2, 0); // Initial position (adjust height for eye level)
 
-function init() {
-    // Create a scene
-    scene = new THREE.Scene();
-
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); // soft white light
-    scene.add(ambientLight);
-
-    // Create a camera
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.far = 10000;
-    camera.position.set(0, standingHeight-.2, 0); // Initial position (adjust height for eye level)
-
-    // Create a WebGL renderer
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
-
-    // Create a ground plane
-    const groundGeometry = new THREE.PlaneGeometry(20, 20);
-    const groundMaterial = new THREE.MeshBasicMaterial({ color: 0x808080, side: THREE.DoubleSide });
-    const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-    ground.rotation.x = -Math.PI / 2; // Rotate to be horizontal
-    scene.add(ground);
-
-    const skyGeometry = new THREE.SphereGeometry(1000, 25, 25);
-
-// Load the texture using TextureLoader
-    const textureLoader = new THREE.TextureLoader();
-    const texture = textureLoader.load('../../assets/terrain/SkySkybox.png');
-
-// Create a Phong material for the skybox with the loaded texture
-    const skyMaterial = new THREE.MeshPhongMaterial({
-        map: texture
-    });
-
-// Create the skybox mesh
-    const skybox = new THREE.Mesh(skyGeometry, skyMaterial);
-
-// Ensure the skybox is rendered on the inside of the sphere
-    skybox.material.side = THREE.BackSide;
-
-// Add the skybox to the scene
-    scene.add(skybox);
-
-
-
-    // Create a capsule shape using CylinderGeometry and SphereGeometry
-    const capsuleGeometry = new THREE.BufferGeometry();
-
-    const cylinderGeometry = new THREE.CylinderGeometry(0.5, 0.5, standingHeight, 32); // Adjust dimensions for character
-    const sphereGeometry = new THREE.SphereGeometry(0.5, 32, 16);
-
-    // Position and merge geometries to create the capsule shape
-    cylinderGeometry.translate(0, standingHeight / 2 - 0.5, 0); // Adjust position for character
-    sphereGeometry.translate(0, 0.5, 0); // Adjust position for character
-
-    capsuleGeometry.merge(cylinderGeometry);
-    capsuleGeometry.merge(sphereGeometry);
-
-    // Create a material
-    const capsuleMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
-
-    // Create a mesh and add it to the scene
-    capsule = new THREE.Mesh(capsuleGeometry, capsuleMaterial);
-    scene.add(capsule);
+    var playerBody = new Capsule();
+    playerBody.addToScene(renderer.scene);
     capsule.add(camera);
 
-    // Hide mouse cursor and lock it within the viewport
+// Hide mouse cursor and lock it within the viewport
     document.body.requestPointerLock = document.body.requestPointerLock || document.body.mozRequestPointerLock || document.body.webkitRequestPointerLock;
     document.exitPointerLock = document.exitPointerLock || document.mozExitPointerLock || document.webkitExitPointerLock;
 
@@ -112,12 +48,9 @@ function init() {
 
     // Handle window resizing
     window.addEventListener('resize', onWindowResize);
-
-    // Start animation loop
-    animate();
 }
 
-function animate() {
+function movement() {
     requestAnimationFrame(animate);
 
     // Smoothly interpolate rotation towards target angles
