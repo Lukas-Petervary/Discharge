@@ -34,12 +34,14 @@ export class CustomCursor {
     }
 
     lock() {
+        this.isLocked = true;
         this.cursorElement.style.backgroundColor = 'blue';
         document.documentElement.requestPointerLock = document.documentElement.requestPointerLock || document.documentElement.mozRequestPointerLock || document.documentElement.webkitRequestPointerLock;
         document.documentElement.requestPointerLock();
     }
 
     unlock() {
+        this.isLocked = false;
         this.cursorElement.style.backgroundColor = 'red';
         document.exitPointerLock = document.exitPointerLock || document.mozExitPointerLock || document.webkitExitPointerLock;
         document.exitPointerLock();
