@@ -107,7 +107,9 @@ export class Player {
             .setFromEuler(new THREE.Euler(cursor.position.y, -1 * cursor.position.x, 0, 'YXZ'))
             .multiply(renderer.camera.quaternion);
 
-        this.playerBody.body.quaternion.rotateTowards(deltaRotationQuaternion, 0.05); // Adjust rotation speed here
+        let playerBodyThreeQuat = Player.quatCto3(this.playerBody.body.quaternion);
+        playerBodyThreeQuat.rotateTowards(deltaRotationQuaternion, 0.05); // Adjust rotation speed here
+        this.playerBody.body.quaternion = Player.quat3toC(playerBodyThreeQuat);
 
         // Update playerBody position based on keyboard movement
         const moveDirection = new THREE.Vector3();
@@ -119,15 +121,22 @@ export class Player {
         moveDirection.applyQuaternion(this.playerBody.body.quaternion);
         moveDirection.multiplyScalar(this.moveSpeed * (this.isSprinting ? this.sprintMultiplier : 1));
 
-        this.playerBody.body.position.add(moveDirection);
+        this.playerBody.body.position.vadd(moveDirection);
 
         // Limit camera rotation vertically
-        window.renderer.camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
+        window.renderer.camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, window.renderer.camera.rotation.x));
 
         // Handle jumping and gravity
         this.handleJump();
 
         // Adjust playerBody height and position based on crouching
         //this.handleCrouch();
+    }
+
+    static quat3toC(threeQuaternion) {
+        return new CANNON.Quaternion(threeQuaternion.x, threeQuaternion.y, threeQuaternion.z, threeQuaternion.w);
+    }
+    static quatCto3(cannonQuaternion) {
+        return new THREE.Quaternion(cannonQuaternion.x, cannonQuaternion.y, cannonQuaternion.z, cannonQuaternion.w);
     }
 }
