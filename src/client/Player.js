@@ -117,8 +117,6 @@ export class Player {
         cameraTargetRotation.setFromEuler(window.cursor.position.y / -32, 0, 0, 'YXZ');
         renderer.camera.quaternion.copy(cameraTargetRotation);
 
-
-
         // Update playerBody position based on keyboard movement
         const moveDirection = new THREE.Vector3();
         if (this.moveForward) moveDirection.z = -1;
