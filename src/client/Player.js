@@ -26,6 +26,8 @@ export class Player {
     init() {
         window.renderer.camera.position.set(this.playerBody.body.position.x, this.playerBody.body.position.y, this.playerBody.body.position.z);
         this.playerBody.mesh.add(renderer.camera);
+        this.playerBody.angularDamping = 1;
+
 
 
         document.addEventListener('keydown', this.onKeyDown, false);
@@ -106,14 +108,16 @@ export class Player {
     }*/
 
     movement() {
-        // Smoothly interpolate rotation towards target angles
-        const deltaRotationQuaternion = new THREE.Quaternion()
-            .setFromEuler(new THREE.Euler(window.cursor.position.y, -1 * window.cursor.position.x, 0, 'YXZ'))
-            .multiply(renderer.camera.quaternion);
+        const targetRotation = new CANNON.Quaternion();
 
-        let playerBodyThreeQuat = Player.quatCto3(this.playerBody.body.quaternion);
-        playerBodyThreeQuat.rotateTowards(deltaRotationQuaternion, 0.05); // Adjust rotation speed here
-        this.playerBody.body.quaternion = Player.quat3toC(playerBodyThreeQuat);
+        targetRotation.setFromEuler(0, window.cursor.position.x / -32 , 0, 'YXZ');
+        this.playerBody.body.quaternion.copy(targetRotation);
+
+        const cameraTargetRotation = new CANNON.Quaternion();
+        cameraTargetRotation.setFromEuler(window.cursor.position.y / -32, 0, 0, 'YXZ');
+        renderer.camera.quaternion.copy(cameraTargetRotation);
+
+
 
         // Update playerBody position based on keyboard movement
         const moveDirection = new THREE.Vector3();
