@@ -13,7 +13,7 @@ renderer.camera.position.set(0, 1.5, 2);
 
 window.world = new World(renderer);
 world.addSphere(1, { x: 0, y: 5, z: 0 });
-createChar();
+//createChar();
 
 window.connection = new ConnectionManager();
 connection.initialize();
@@ -22,7 +22,7 @@ window.debugTerminal.log('Finished initializing');
 
 function animate() {
     requestAnimationFrame(animate);
-    movement();
+    //movement();
 
     world.step();
     renderer.render();
