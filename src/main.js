@@ -5,8 +5,8 @@ import { Renderer } from "./render/Renderer.js";
 import { World } from "./render/World.js";
 import { Player } from "./client/Player.js";
 
-window.debugTerminal = new Terminal();
 window.cursor = new CustomCursor();
+window.debugTerminal = new Terminal();
 
 window.renderer = new Renderer();
 renderer.camera.position.set(0, 1.5, 2);
@@ -16,10 +16,12 @@ world.addSphere(1, { x: 0, y: 5, z: 0 });
 
 window.mainPlayer = new Player();
 
-window.connection = new ConnectionManager();
-connection.initialize();
-
 debugTerminal.log('Finished initializing');
+
+window.connectionManager = new ConnectionManager();
+connectionManager.initialize();
+
+debugTerminal.log('Finished instantiating connection')
 
 function animate() {
     requestAnimationFrame(animate);

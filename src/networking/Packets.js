@@ -6,7 +6,7 @@ let handshakeList = [];
 class GenericPacket {
     constructor(type) {
         this.type = type;
-        this.peer = ConnectionManager.getInstance().peerId;
+        this.peer = connectionManager.peerId;
     }
 }
 
@@ -25,29 +25,28 @@ class HandshakePacket extends GenericPacket {
     }
 
     static handleHandshake(packet, fromPeerId) {
-        const network = ConnectionManager.getInstance();
-        console.log(`Handshake inbound from "${fromPeerId}":\n${JSON.stringify(packet)}`);
+        debugTerminal.log(`Handshake inbound from "${fromPeerId}":\n${JSON.stringify(packet)}`);
 
         const sender = packet.peerId;
         if (!handshakeList.includes(sender)) {
             handshakeList.push(sender);
 
             // if not already connected, establish connection
-            if (!network.connections.has(sender)) {
-                console.log(`Connecting from handshake "${fromPeerId}"`);
-                network.connectToPeer(sender);
+            if (!connectionManager.connections.has(sender)) {
+                debugTerminal.log(`Connecting from handshake "${fromPeerId}"`);
+                connectionManager.connectToPeer(sender);
             }
             else { // if connected, reciprocate handshake
-                console.log(`Already connected to "${fromPeerId}", returning handshake`);
-                network.sendHandshake(network.connections.get(sender));
+                debugTerminal.log(`Already connected to "${fromPeerId}", returning handshake`);
+                connectionManager.sendHandshake(connectionManager.connections.get(sender));
             }
-            console.log(`Current handshakes: [${handshakeList}]\nBroadcast: ${fromPeerId === sender}`);
+            debugTerminal.log(`Current handshakes: [${handshakeList}]\nBroadcast: ${fromPeerId === sender}`);
 
             // only propagate handshake if from initial sender
             if (fromPeerId === sender) {
                 const jsonPacket = JSON.stringify(packet);
                 this.connections.forEach(conn => {
-                    console.log(`Broadcasting ? [${conn.peer !== sender}]: handshake to "${conn.peer}":\n${jsonPacket}`);
+                    debugTerminal.log(`Broadcasting ? [${conn.peer !== sender}]: handshake to "${conn.peer}":\n${jsonPacket}`);
                     // if connection is open and not returning to sender
                     if (conn.open && conn.peer !== sender) {
                         conn.send(jsonPacket);

@@ -16,7 +16,7 @@ export class PacketManager {
         if (handler) {
             handler(parsedData, fromPeerId, peerManager);
         } else {
-            console.warn(`No handler for packet type: ${parsedData.type}`);
+            debugTerminal.log(`No handler for packet type: ${parsedData.type}`);
         }
     }
 }

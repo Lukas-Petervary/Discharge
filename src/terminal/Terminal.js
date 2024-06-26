@@ -54,11 +54,7 @@ export class Terminal {
         const [file, line] = stack.match(/(?:\/|\\)([^\/\\]+):(\d+):\d+/).slice(1, 3);
         const logMessage = `${file}:${line} - ${message}`;
 
-        if (window.debugTerminal) {
-            window.debugTerminal.outputLog(logMessage);
-        } else {
-            console.log(logMessage);
-        }
+        window.debugTerminal ? window.debugTerminal.outputLog(logMessage) : console.log(logMessage);
     }
 
     initDrag() {

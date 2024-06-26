@@ -30,7 +30,7 @@ export class CustomCursor {
     toggleLock() {
         this.isLocked = !this.isLocked;
         this.isLocked ? this.lock() : this.unlock();
-        debugTerminal.log(`Cursor ${this.isLocked ? 'locked' : 'unlocked'}`)
+        window.debugTerminal.log(`Cursor ${this.isLocked ? 'locked' : 'unlocked'}`)
     }
 
     lock() {

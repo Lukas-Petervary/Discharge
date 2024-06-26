@@ -3,10 +3,7 @@ import { HandshakePacket, MessagePacket, AlertPacket, PositionPacket } from "./P
 
 
 export default class ConnectionManager {
-    static instance;
-
     constructor() {
-        ConnectionManager.instance = this;
         this.peerId = localStorage.getItem('peerId') || this.generatePeerId();
         localStorage.setItem('peerId', this.peerId);
         this.peer = new Peer(this.peerId);
@@ -19,15 +16,11 @@ export default class ConnectionManager {
         this.packetManager.registerPacket('position', PositionPacket.handlePositionPacket.bind(this));
     }
 
-    static getInstance() {
-        return ConnectionManager.instance;
-    }
-
-    static printConnections() {
-        console.log(`
-        Connections: [${[...ConnectionManager.instance.connections.keys()]}]
-        Packets Sent: ${ConnectionManager.instance.packetManager.sentPackets}
-        Packets Received: ${ConnectionManager.instance.packetManager.receivedPackets}
+    printConnections() {
+        debugTerminal.log(`
+        Connections: [${[...connectionManager.connections.keys()]}]
+        Packets Sent: ${connectionManager.packetManager.sentPackets}
+        Packets Received: ${connectionManager.packetManager.receivedPackets}
         `);
     }
 
@@ -37,12 +30,12 @@ export default class ConnectionManager {
 
     initialize() {
         this.peer.on('open', id => {
-            console.log('My peer ID is: ' + id);
+            debugTerminal.log('My peer ID is: ' + id);
             document.getElementById('connection-id').textContent = 'Your Connection ID: ' + id;
         });
 
         this.peer.on('connection', connection => {
-            console.log('Incoming connection from ' + connection.peer);
+            debugTerminal.log('Incoming connection from ' + connection.peer);
             this.addConnection(connection);
             this.sendHandshake(connection);
         });
@@ -50,17 +43,17 @@ export default class ConnectionManager {
 
     connectToPeer(peerId) {
         if (peerId === this.peerId) {
-            console.log('Attempted self-connection');
+            debugTerminal.log('Attempted self-connection');
             return;
         }
         else if (this.connections.has(peerId)) {
-            console.log('Already connected to ' + peerId);
+            debugTerminal.log('Already connected to ' + peerId);
             return;
         }
 
         const connection = this.peer.connect(peerId);
         connection.on('open', () => {
-            console.log('Connected to ' + peerId);
+            debugTerminal.log('Connected to ' + peerId);
             this.addConnection(connection);
             this.sendHandshake(connection);
         });
@@ -73,7 +66,7 @@ export default class ConnectionManager {
         });
 
         connection.on('close', () => {
-            console.log(`Connection with "${connection.peer}" closed`);
+            debugTerminal.log(`Connection with "${connection.peer}" closed`);
             document.getElementById(`peer-${connection.peer}`).remove();
             this.connections.delete(connection.peer);
         });
@@ -82,7 +75,7 @@ export default class ConnectionManager {
     sendHandshake(connection) {
         this.packetManager.sentPackets++;
         const handshakePacket = JSON.stringify(new HandshakePacket(this.peerId), null);
-        console.log(`Handshake outbound to "${connection.peer}":\n${handshakePacket}`);
+        debugTerminal.log(`Handshake outbound to "${connection.peer}":\n${handshakePacket}`);
         connection.send(handshakePacket);
     }
 
