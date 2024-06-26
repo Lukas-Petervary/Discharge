@@ -30,8 +30,8 @@ export class Player {
 
 
 
-        document.addEventListener('keydown', this.onKeyDown, false);
-        document.addEventListener('keyup', this.onKeyUp, false);
+        document.addEventListener('keydown', this.onKeyDown.bind(this), false);
+        document.addEventListener('keyup', this.onKeyUp.bind(this), false);
     }
 
     onKeyDown(event) {
@@ -106,6 +106,25 @@ export class Player {
             playerBody.position.y = standingHeight / 2; // Adjust position when standing
         }
     }*/
+    handlePlayerMovement() {
+        const moveDirection = new THREE.Vector3();
+
+        if (this.moveForward) moveDirection.z = -1;
+        if (this.moveBackward) moveDirection.z = 1;
+        if (this.moveLeft) moveDirection.x = -1;
+        if (this.moveRight) moveDirection.x = 1;
+
+        moveDirection.applyQuaternion(this.playerBody.body.quaternion);
+        moveDirection.normalize(); // Normalize the direction vector to avoid faster diagonal movement
+
+        const speed = this.moveSpeed * (this.isSprinting ? this.sprintMultiplier : 1);
+        moveDirection.multiplyScalar(speed);
+
+        // Apply force to the player body
+        const force = new CANNON.Vec3(moveDirection.x, 0, moveDirection.z);
+        this.playerBody.body.position.x += force.x;
+        this.playerBody.body.position.z += force.z;
+    }
 
     movement() {
         const targetRotation = new CANNON.Quaternion();
@@ -117,17 +136,8 @@ export class Player {
         cameraTargetRotation.setFromEuler(window.cursor.position.y / -32, 0, 0, 'YXZ');
         renderer.camera.quaternion.copy(cameraTargetRotation);
 
-        // Update playerBody position based on keyboard movement
-        const moveDirection = new THREE.Vector3();
-        if (this.moveForward) moveDirection.z = -1;
-        if (this.moveBackward) moveDirection.z = 1;
-        if (this.moveLeft) moveDirection.x = -1;
-        if (this.moveRight) moveDirection.x = 1;
+        this.handlePlayerMovement();
 
-        moveDirection.applyQuaternion(this.playerBody.body.quaternion);
-        moveDirection.multiplyScalar(this.moveSpeed * (this.isSprinting ? this.sprintMultiplier : 1));
-
-        this.playerBody.body.position.vadd(moveDirection);
 
         // Limit camera rotation vertically
         window.renderer.camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, window.renderer.camera.rotation.x));
