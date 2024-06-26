@@ -103,6 +103,11 @@ export class World {
         return physicsObject;
     }
 
+    fixToAngle(object, axis = 'y') {
+        const quaternion = new CANNON.Quaternion();
+        quaternion.setFromAxisAngle(new CANNON.Vec3(axis === 'x' ? 1 : 0, axis === 'y' ? 1 : 0, axis === 'z' ? 1 : 0), 0);
+        object.body.quaternion.copy(quaternion);
+    }
 
     step() {
         // Step the physics world

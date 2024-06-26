@@ -23,8 +23,10 @@ window.debugTerminal.log('Finished initializing');
 
 function animate() {
     requestAnimationFrame(animate);
-    window.mainPlayer.movement();
-
+    if(window.cursor.isLocked)
+        window.mainPlayer.movement();
+    else
+        window.world.fixToAngle(window.mainPlayer.playerBody, 0);
     world.step();
     renderer.render();
 }
