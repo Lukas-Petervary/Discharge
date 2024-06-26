@@ -30,6 +30,10 @@ export class CustomCursor {
         }
     }
 
+    track() {
+        return {position: this.position, delta: this.delta};
+    }
+
     toggleLock() {
         this.isLocked = !this.isLocked;
         this.isLocked ? this.lockCursor() : this.unlockCursor();

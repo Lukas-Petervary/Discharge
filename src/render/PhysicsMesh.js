@@ -1,4 +1,4 @@
-class PhysicsMesh {
+export class PhysicsMesh {
     constructor(body, mesh) {
         this.body = body;
         this.mesh = mesh;
@@ -6,7 +6,7 @@ class PhysicsMesh {
 
     add() {
         window.world.world.addBody(this.body);
-        window.world.renderer.add(this.mesh);
+        window.renderer.scene.add(this.mesh);
     }
 
     update() {

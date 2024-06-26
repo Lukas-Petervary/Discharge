@@ -1,4 +1,4 @@
-import { Capsule } from "./Renderer.js";
+import { PhysicsMesh } from './PhysicsMesh.js';
 
 export class World {
     constructor(renderer) {
@@ -47,62 +47,60 @@ export class World {
             shape: sphereShape,
             material: this.defaultMaterial,
         });
-        this.world.addBody(sphereBody);
 
         // Three.js sphere
         const sphereGeometry = new THREE.SphereGeometry(radius, 32, 32);
         const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff });
         const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
-        this.renderer.scene.add(sphereMesh);
 
-        // Store objects for synchronization
-        this.objects.push({ body: sphereBody, mesh: sphereMesh });
+        // Create PhysicsObject
+        const physicsObject = new PhysicsMesh(sphereBody, sphereMesh);
+        this.objects.push(physicsObject);
+        physicsObject.add();
+        return physicsObject;
     }
 
-    addCapsule(radiusTop, radiusBottom, height, radialSegments, heightSegments, position) {
-        // Cannon.js capsule (combination of sphere and cylinder)
-        const halfHeight = height / 2;
-        const sphereShape = new CANNON.Sphere(radiusTop);
-        const sphereBodyTop = new CANNON.Body({
-            mass: 1,
-            position: new CANNON.Vec3(position.x, position.y + halfHeight, position.z),
-            shape: sphereShape,
-            material: this.defaultMaterial, // Adjust this according to your needs
-        });
-
-        const cylinderShape = new CANNON.Cylinder(radiusTop, radiusBottom, height, radialSegments);
-        const cylinderBody = new CANNON.Body({
+    addCapsule(radius, height, position) {
+        // Cannon.js capsule
+        const capsuleBody = new CANNON.Body({
             mass: 1,
             position: new CANNON.Vec3(position.x, position.y, position.z),
-            shape: cylinderShape,
-            material: this.defaultMaterial, // Adjust this according to your needs
+            material: this.defaultMaterial,
         });
 
-        const sphereShapeBottom = new CANNON.Sphere(radiusBottom);
-        const sphereBodyBottom = new CANNON.Body({
-            mass: 1,
-            position: new CANNON.Vec3(position.x, position.y - halfHeight, position.z),
-            shape: sphereShapeBottom,
-            material: this.defaultMaterial, // Adjust this according to your needs
-        });
+        const sphereShape = new CANNON.Sphere(radius);
+        const cylinderShape = new CANNON.Cylinder(radius, radius, height, 8);
 
-        this.world.addBody(sphereBodyTop);
-        this.world.addBody(cylinderBody);
-        this.world.addBody(sphereBodyBottom);
+        capsuleBody.addShape(sphereShape, new CANNON.Vec3(0, height / 2, 0));
+        capsuleBody.addShape(sphereShape, new CANNON.Vec3(0, -height / 2, 0));
+        capsuleBody.addShape(cylinderShape, new CANNON.Vec3(0, 0, 0), new CANNON.Quaternion().setFromAxisAngle(new CANNON.Vec3(1, 0, 0), Math.PI / 2));
 
         // Three.js capsule
-        let capsule = new Capsule(radiusTop, radiusBottom, height, radialSegments, heightSegments, position);
-        capsule.setTexture('../../assets/textures/capsule_texture.jpg');
-        capsule.addToScene(renderer.scene);
+        const capsuleGeometry = new THREE.CylinderGeometry(radius, radius, height, 8);
+        const capsuleMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        const capsuleMesh = new THREE.Mesh(capsuleGeometry, capsuleMaterial);
 
-        // Store objects for synchronization
-        this.objects.push(
-            { body: sphereBodyTop, mesh: capsule.mesh },
-            { body: cylinderBody, mesh: capsule.mesh },
-            { body: sphereBodyBottom, mesh: capsule.mesh }
-        );
+        // Create top sphere mesh
+        const topSphereGeometry = new THREE.SphereGeometry(radius, 32, 32);
+        const topSphereMesh = new THREE.Mesh(topSphereGeometry, capsuleMaterial);
+        topSphereMesh.position.y = height / 2;
 
-        return [{ body: sphereBodyTop, mesh: capsule.mesh }, { body: cylinderBody, mesh: capsule.mesh }, { body: sphereBodyBottom, mesh: capsule.mesh }];
+        // Create bottom sphere mesh
+        const bottomSphereGeometry = new THREE.SphereGeometry(radius, 32, 32);
+        const bottomSphereMesh = new THREE.Mesh(bottomSphereGeometry, capsuleMaterial);
+        bottomSphereMesh.position.y = -height / 2;
+
+        // Combine meshes
+        const capsuleGroup = new THREE.Group();
+        capsuleGroup.add(capsuleMesh);
+        capsuleGroup.add(topSphereMesh);
+        capsuleGroup.add(bottomSphereMesh);
+
+        // Create PhysicsObject
+        const physicsObject = new PhysicsMesh(capsuleBody, capsuleGroup);
+        physicsObject.add();
+        this.objects.push(physicsObject);
+        return physicsObject;
     }
 
 
@@ -112,8 +110,7 @@ export class World {
 
         // Update Three.js objects based on physics
         this.objects.forEach(obj => {
-            obj.mesh.position.copy(obj.body.position);
-            obj.mesh.quaternion.copy(obj.body.quaternion);
+            obj.update();
         });
     }
 }
