@@ -1,7 +1,7 @@
 export class CustomCursor {
     constructor() {
         this.cursorElement = document.getElementById('custom-cursor');
-        this.isLocked = false;
+        this.isLocked = true;
         this.position = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
         this.delta = { dx: 0, dy: 0 };
 

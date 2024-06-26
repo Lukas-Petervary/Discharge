@@ -1,3 +1,5 @@
+//import {CustomCursor} from "../terminal/Cursor";
+
 export class Player {
     constructor() {
         // Player Body Mesh
@@ -22,7 +24,9 @@ export class Player {
     }
 
     init() {
+        window.renderer.camera.position.set(this.playerBody.body.position.x, this.playerBody.body.position.y, this.playerBody.body.position.z);
         this.playerBody.mesh.add(renderer.camera);
+
 
         document.addEventListener('keydown', this.onKeyDown, false);
         document.addEventListener('keyup', this.onKeyUp, false);
@@ -75,7 +79,7 @@ export class Player {
             case 16: // Shift (sprint)
                 this.isSprinting = false;
                 break;
-            case 67: // Ctrl (crouch)
+            case 67: // C (crouch)
                 this.isCrouching = false;
                 break;
         }
@@ -104,7 +108,7 @@ export class Player {
     movement() {
         // Smoothly interpolate rotation towards target angles
         const deltaRotationQuaternion = new THREE.Quaternion()
-            .setFromEuler(new THREE.Euler(cursor.position.y, -1 * cursor.position.x, 0, 'YXZ'))
+            .setFromEuler(new THREE.Euler(window.cursor.position.y, -1 * window.cursor.position.x, 0, 'YXZ'))
             .multiply(renderer.camera.quaternion);
 
         let playerBodyThreeQuat = Player.quatCto3(this.playerBody.body.quaternion);
