@@ -1,4 +1,3 @@
-
 export class Renderer {
     constructor() {
         this.scene = new THREE.Scene();
