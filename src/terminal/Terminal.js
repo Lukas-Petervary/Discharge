@@ -49,7 +49,7 @@ export class Terminal {
         this.output.scrollTop = this.output.scrollHeight;
     }
 
-    static log(message) {
+    log(message) {
         const stack = new Error().stack.split('\n')[2];
         const [file, line] = stack.match(/(?:\/|\\)([^\/\\]+):(\d+):\d+/).slice(1, 3);
         const logMessage = `${file}:${line} - ${message}`;

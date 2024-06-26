@@ -12,20 +12,16 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
     </head>
     <body>
-        <!-- <script type="module" src="src/client/Player.js"></script> -->
-
         <div id="custom-cursor"></div>
 
-        <div id="terminal" class="terminal">
-            <div class="terminal-header">
-                <span>Terminal</span>
-                <button id="close-terminal-btn">X</button>
-            </div>
-            <div class="terminal-body">
-                <pre id="terminal-output"></pre>
-            </div>
-            <div class="terminal-input">
-                <input id="terminal-input" type="text" placeholder=">_">
+        <div id="terminal-container">
+            <div class="terminal">
+                <div class="terminal-header">Terminal</div>
+                <div class="terminal-output"></div>
+                <div class="terminal-input">
+                    <span class="prompt">$ </span>
+                    <input type="text" id="terminal-input">
+                </div>
             </div>
         </div>
 

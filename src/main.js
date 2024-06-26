@@ -19,7 +19,7 @@ window.mainPlayer = new Player();
 window.connection = new ConnectionManager();
 connection.initialize();
 
-Terminal.log('Finished initializing');
+debugTerminal.log('Finished initializing');
 
 function animate() {
     requestAnimationFrame(animate);
