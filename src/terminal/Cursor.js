@@ -10,6 +10,7 @@ export class CustomCursor {
 
     init() {
         document.addEventListener('mousemove', (e) => this.onMouseMove(e));
+        this.cursorElement.style.transform = `translate(${this.position.x}px, ${this.position.y}px)`;
     }
 
     onMouseMove(e) {

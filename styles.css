@@ -1,82 +1,71 @@
 * {
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
 }
-body {
+
+html, body {
+    height: 100%;
     font-family: Arial, sans-serif;
     cursor: none;
 }
 
-#open-terminal-btn {
-    margin: 20px;
-    position: absolute;
-}
-
 .terminal {
-    display: none;
     position: absolute;
-    width: 400px;
-    height: 300px;
-    background-color: #000;
-    color: #fff;
-    border: 2px solid #333;
+    top: 50px;
+    left: 50px;
+    width: 80%;
+    max-width: 800px;
+    height: 60%;
+    max-height: 600px;
+    background-color: #111;
     border-radius: 5px;
-    z-index: 999;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-    font-family: Calibri, sans-serif;
+    border: 4px solid #333; /* Grey border */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    cursor: move;
+    color: white;
+    font-family: 'Courier New', Courier, monospace;
 }
 
 .terminal-header {
-    background-color: #333;
-    padding: 3px;
     cursor: move;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.terminal-header span {
-    margin-left: 10px;
-}
-
-.terminal-header button {
-    background-color: #111;
-    border: none;
-    color: #fff;
     padding: 5px;
-    cursor: pointer;
-    margin-right: 5px;
-    border-radius: 5px;
-    width: 25px;
-    height: 25px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 100%;
+    background-color: #333; /* Darker background for title area */
+    border-bottom: 2px solid #333; /* Grey border for title area */
+    text-align: center;
+    font-weight: bold;
+    color: white;
 }
 
-.terminal-body {
-    padding: 10px;
-    height: calc(100% - 30px);
+.terminal-output {
+    flex-grow: 1;
     overflow-y: auto;
     white-space: pre-wrap;
-    font-family: monospace;
+    word-wrap: break-word;
+    padding: 20px;
 }
 
 .terminal-input {
-    position: absolute;
-    top: calc(100% - 25px);
-    width: 100%;
-    height: 25px;
-    background-color: #333;
+    display: flex;
+    align-items: center;
+    padding: 20px;
 }
 
-.terminal-input input {
-    width: 100%;
-    height: 20px;
+.prompt {
+    margin-right: 5px;
+}
+
+#terminal-input {
+    background: none;
     border: none;
-    color: #fff;
-    background-color: #555;
-    text-indent: 10px;
+    color: white;
+    outline: none;
+    flex-grow: 1;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 16px;
 }
 
 #custom-cursor {

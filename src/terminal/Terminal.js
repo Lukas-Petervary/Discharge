@@ -1,97 +1,118 @@
 export class Terminal {
     constructor() {
-        this.open = false;
-        this.terminal = document.getElementById('terminal');
-        this.closeBtn = document.getElementById('close-terminal-btn');
-        this.terminalInput = document.getElementById('terminal-input');
-        this.terminalOutput = document.getElementById('terminal-output');
-        this.isDragging = false;
-        this.offset = { x: 0, y: 0 };
-        this.cursorPrevLocked = false;
+        this.container = document.getElementById('terminal-container');
+        this.terminal = this.container.querySelector('.terminal');
+        this.header = this.terminal.querySelector('.terminal-header');
+        this.output = this.terminal.querySelector('.terminal-output');
+        this.inputLine = this.terminal.querySelector('.terminal-input');
+        this.prompt = this.inputLine.querySelector('.prompt');
+        this.input = this.inputLine.querySelector('#terminal-input');
 
-        this.init();
+        this.isOpen = false;
+        this.prevCursorLocked = false;
+
+        this.initDrag();
+        this.initToggle();
+        this.input.addEventListener('keydown', this.handleInput.bind(this));
+        this.closeTerminal();
     }
 
-    init() {
-        document.addEventListener('keydown', (e) => this.handleKeydown(e));
-        this.closeBtn.addEventListener('click', () => this.closeTerminal());
-        this.terminalInput.addEventListener('keydown', (e) => this.handleInput(e));
-
-        this.terminal.querySelector('.terminal-header').addEventListener('mousedown', (e) => this.startDrag(e));
-        document.addEventListener('mousemove', (e) => this.drag(e));
-        document.addEventListener('mouseup', () => this.stopDrag());
-    }
-
-    handleKeydown(e) {
-        if (e.key === '`') {
-            if (this.open) this.closeTerminal();
-            else this.openTerminal();
-        }
-    }
-
-    handleInput(e) {
-        if (e.key === 'Enter') {
-            const code = this.terminalInput.value;
-            this.terminalInput.value = '';
-
-            try {
-                eval(code);
-                this.log(`> ${code}`);
-            } catch (err) {
-                this.log(`> ${code}\nError: ${err.message}`);
+    handleInput(event) {
+        if (event.key === 'Enter') {
+            const command = this.input.value.trim();
+            if (command) {
+                this.output.innerHTML += `<div>${this.prompt.textContent}${command}</div>`;
+                this.executeCommand(command);
             }
+            this.input.value = '';
+            this.scrollToBottom();
         }
     }
 
+    executeCommand(command) {
+        try {
+            const result = eval(command);
+            this.outputLog(result);
+        } catch (error) {
+            this.outputLog(error, true);
+        }
+    }
+
+    outputLog(message, isError = false) {
+        const log = document.createElement('div');
+        log.textContent = isError ? `Error: ${message}` : message;
+        this.output.appendChild(log);
+        this.scrollToBottom();
+    }
+
+    scrollToBottom() {
+        this.output.scrollTop = this.output.scrollHeight;
+    }
+
+    static log(message) {
+        const stack = new Error().stack.split('\n')[2];
+        const [file, line] = stack.match(/(?:\/|\\)([^\/\\]+):(\d+):\d+/).slice(1, 3);
+        const logMessage = `${file}:${line} - ${message}`;
+
+        if (window.debugTerminal) {
+            window.debugTerminal.outputLog(logMessage);
+        } else {
+            console.log(logMessage);
+        }
+    }
+
+    initDrag() {
+        this.header.onmousedown = this.dragMouseDown.bind(this);
+    }
+
+    dragMouseDown(event) {
+        event.preventDefault();
+        this.pos3 = event.clientX;
+        this.pos4 = event.clientY;
+        document.onmouseup = this.closeDragElement.bind(this);
+        document.onmousemove = this.elementDrag.bind(this);
+    }
+
+    elementDrag(event) {
+        event.preventDefault();
+        this.pos1 = this.pos3 - event.clientX;
+        this.pos2 = this.pos4 - event.clientY;
+        this.pos3 = event.clientX;
+        this.pos4 = event.clientY;
+        this.terminal.style.top = (this.terminal.offsetTop - this.pos2) + "px";
+        this.terminal.style.left = (this.terminal.offsetLeft - this.pos1) + "px";
+    }
+
+    closeDragElement() {
+        document.onmouseup = null;
+        document.onmousemove = null;
+    }
+
+    initToggle() {
+        document.addEventListener('keydown', (event) => {
+            if (event.key === '`') {
+                event.preventDefault();
+                this.toggleTerminal();
+            }
+        });
+    }
+
+    toggleTerminal() {
+        this.isOpen ? this.closeTerminal() : this.openTerminal();
+    }
 
     openTerminal() {
-        this.terminal.style.display = 'block';
-        this.open = true;
-        this.cursorPrevLocked = window.cursor.isLocked;
-        window.cursor.unlockCursor();
+        this.isOpen = true;
+        this.prevCursorLocked = window.cursor.isLocked;
+        window.cursor.unlock();
+        this.terminal.style.display = 'flex';
+        this.input.focus();
     }
 
     closeTerminal() {
+        this.isOpen = false;
+        if (this.prevCursorLocked)
+            window.cursor.lock();
         this.terminal.style.display = 'none';
-        this.open = false;
-        if (this.cursorPrevLocked) {
-            window.cursor.lockCursor();
-        }
-    }
-
-    startDrag(e) {
-        this.isDragging = true;
-        this.offset = {
-            x: e.clientX - this.terminal.getBoundingClientRect().left,
-            y: e.clientY - this.terminal.getBoundingClientRect().top
-        };
-    }
-
-    drag(e) {
-        if (this.isDragging) {
-            this.terminal.style.left = `${e.clientX - this.offset.x}px`;
-            this.terminal.style.top = `${e.clientY - this.offset.y}px`;
-        }
-    }
-
-    stopDrag() {
-        this.isDragging = false;
-    }
-
-    log(message) {
-        const { fileName, lineNumber } = this.getCallerInfo();
-        this.terminalOutput.textContent += `[${fileName}:${lineNumber}] ${message}\n`;
-        this.terminalOutput.scrollTop = this.terminalOutput.scrollHeight;
-    }
-
-    getCallerInfo() {
-        const error = new Error();
-        const stackLines = error.stack.split('\n');
-        const callerLine = stackLines[3].trim();
-        const match = callerLine.match(/(\/[^/]+\/[^/]+):(\d+):\d+/);
-        if (match) {
-            return { fileName: match[1], lineNumber: match[2] };
-        }
-        return { fileName: 'unknown', lineNumber: 'unknown' };
     }
 }
