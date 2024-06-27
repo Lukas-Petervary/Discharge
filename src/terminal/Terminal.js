@@ -52,7 +52,7 @@ export class Terminal {
     log(message) {
         const stack = new Error().stack.split('\n')[2];
         const [file, line] = stack.match(/(?:\/|\\)([^\/\\]+):(\d+):\d+/).slice(1, 3);
-        const logMessage = `${file}:${line} - ${message}`;
+        const logMessage = `${file}:${line} > ${message}`;
 
         window.debugTerminal ? window.debugTerminal.outputLog(logMessage) : console.log(logMessage);
     }

@@ -1,9 +1,8 @@
-//import {CustomCursor} from "../terminal/Cursor";
-
 export class Player {
     constructor() {
         // Player Body Mesh
         this.playerBody = world.addCapsule(0.5, this.standingHeight, {x: 0, y: 0, z: 0});
+        this.sensitivity = 3;
 
         // Movement variables
         this.jumpSpeed = 2;
@@ -129,23 +128,22 @@ export class Player {
     movement() {
         const targetRotation = new CANNON.Quaternion();
 
-        targetRotation.setFromEuler(0, window.cursor.position.x / -32 , 0, 'YXZ');
+        targetRotation.setFromEuler(0, 1 - (this.sensitivity * cursor.position.x/window.innerWidth * 2), 0, 'YXZ');
         this.playerBody.body.quaternion.copy(targetRotation);
 
         const cameraTargetRotation = new CANNON.Quaternion();
-        cameraTargetRotation.setFromEuler(window.cursor.position.y / -32, 0, 0, 'YXZ');
+
+        const min = -Math.PI/2.2;
+        const max = Math.PI/2.2;
+        let yVal = 1 - (this.sensitivity*cursor.position.y/window.innerHeight * 2);
+        yVal = yVal < min ? min : yVal > max ? max : yVal;
+        cursor.position.y = (1-yVal) / 2 * window.innerHeight / this.sensitivity;
+
+        cameraTargetRotation.setFromEuler(yVal, 0, 0, 'YXZ');
         renderer.camera.quaternion.copy(cameraTargetRotation);
 
         this.handlePlayerMovement();
-
-
-        // Limit camera rotation vertically
-        window.renderer.camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, window.renderer.camera.rotation.x));
-
-        // Handle jumping and gravity
         this.handleJump();
-
-        // Adjust playerBody height and position based on crouching
         //this.handleCrouch();
     }
 
