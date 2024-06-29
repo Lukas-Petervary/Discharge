@@ -4,6 +4,10 @@ export class Player {
         this.playerBody = world.addCapsule(0.5, this.standingHeight, {x: 0, y: 0, z: 0});
         this.sensitivity = 3;
 
+        // Player look direction
+        this.pitch = 0;
+        this.yaw = 0;
+
         // Movement variables
         this.jumpSpeed = 2;
         this.firstPerson = true;
@@ -32,45 +36,13 @@ export class Player {
             newQuaternion.setFromEuler(0, yaw, 0, 'YXZ');
 
             body.quaternion.copy(newQuaternion);
-
-            const camOffset = this.firstPerson ? new CANNON.Vec3(0,0,0) : new CANNON.Vec3(0,1,2);
-            renderer.camera.position.copy(this.getCameraFrustum(world.world, this.playerBody.body.position.clone(), camOffset));
+            body.angularVelocity.set(0,0,0);
         };
 
-        this.playerBody.angularDamping = 1;
+        //this.playerBody.angularDamping = 1;
 
         document.addEventListener('keydown', this.onKeyDown.bind(this), false);
         document.addEventListener('keyup', this.onKeyUp.bind(this), false);
-    }
-
-    getCameraFrustum(world, startPos, cameraOffset) {
-        const desiredCameraPos = new CANNON.Vec3(
-            startPos.x + cameraOffset.x,
-            startPos.y + cameraOffset.y,
-            startPos.z + cameraOffset.z
-        );
-
-        const to = desiredCameraPos;
-        const result = new CANNON.RaycastResult();
-        const ray = new CANNON.Ray(startPos, to);
-        ray.intersectWorld(world, {
-            collisionFilterMask: ~0,
-            collisionFilterGroup: -1,
-        }, result);
-
-        if (result.hasHit) {
-            const hitPoint = result.hitPointWorld;
-
-            const hitNormal = result.hitNormalWorld;
-            const adjustedCameraPos = new CANNON.Vec3(
-                hitPoint.x - hitNormal.x * 0.1,
-                hitPoint.y - hitNormal.y * 0.1,
-                hitPoint.z - hitNormal.z * 0.1
-            );
-
-            return new THREE.Vector3(adjustedCameraPos.x, adjustedCameraPos.y, adjustedCameraPos.z);
-        }
-        return new THREE.Vector3(desiredCameraPos.x, desiredCameraPos.y, desiredCameraPos.z);
     }
 
     onKeyDown(event) {
@@ -167,21 +139,49 @@ export class Player {
         this.playerBody.body.position.z += force.z;
     }
 
-    movement() {
-        const targetRotation = new CANNON.Quaternion();
-
-        targetRotation.setFromEuler(0, 1 - (this.sensitivity * cursor.position.x/window.innerWidth * 2), 0, 'YXZ');
-        this.playerBody.body.quaternion.copy(targetRotation);
-
-        const cameraTargetRotation = new CANNON.Quaternion();
-
+    updateCameraRotation() {
+        // clamp camera pitch
         const min = -Math.PI/2.2, max = Math.PI/2.2;
-        let yVal = 1 - (this.sensitivity*cursor.position.y/window.innerHeight * 2);
-        yVal = yVal < min ? min : yVal > max ? max : yVal;
-        cursor.position.y = (1-yVal) / 2 * window.innerHeight / this.sensitivity;
+        this.pitch = this.sensitivity * (1 - cursor.position.y/window.innerHeight*2);
+        this.pitch = this.pitch < min ? min : this.pitch > max ? max : this.pitch;
+        cursor.position.y = (1 - this.pitch/this.sensitivity) * window.innerHeight / 2;
 
-        cameraTargetRotation.setFromEuler(yVal, 0, 0, 'YXZ');
-        renderer.camera.quaternion.copy(cameraTargetRotation);
+        this.yaw = this.sensitivity * (1 - cursor.position.x/window.innerWidth*2);
+
+        // apply pitch and yaw to camera
+        const lookVec = new CANNON.Quaternion();
+        lookVec.setFromEuler(0, this.yaw, 0, 'YXZ');
+        this.playerBody.body.quaternion.copy(lookVec);
+        lookVec.setFromEuler(this.pitch, this.yaw, 0, 'YXZ');
+        renderer.camera.quaternion.copy(lookVec);
+    }
+
+    updateCameraFrustum(camOffset) {
+        const pitchQuaternion = new THREE.Quaternion();
+        pitchQuaternion.setFromAxisAngle(new THREE.Vector3(1, 0, 0), this.pitch);
+
+        const combinedQuaternion = this.playerBody.mesh.quaternion.clone().multiply(pitchQuaternion);
+        const offset = camOffset.clone().applyQuaternion(combinedQuaternion);
+        const desiredCamPos = new CANNON.Vec3().copy(this.playerBody.mesh.position).vadd(offset);
+
+        // raytracing not working ?? ty cannon
+        const ray = new CANNON.Ray(this.playerBody.body.position, new CANNON.Vec3().copy(desiredCamPos));
+        ray._updateDirection();
+        const result = new CANNON.RaycastResult();
+
+        const collision = ray.intersectBodies(world.world.bodies, result);
+        const finalPos = collision ? result.hitPointWorld : desiredCamPos;
+
+        renderer.camera.position.copy(finalPos);
+        renderer.camera.lookAt(this.playerBody.mesh.position);
+    }
+
+    movement() {
+        this.updateCameraRotation();
+        if (this.firstPerson)
+            renderer.camera.position.copy(this.playerBody.mesh.position);
+        else
+            this.updateCameraFrustum(new THREE.Vector3(0,0,5));
 
         this.handlePlayerMovement();
         this.handleJump();
