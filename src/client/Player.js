@@ -6,6 +6,7 @@ export class Player {
 
         // Movement variables
         this.jumpSpeed = 2;
+        this.firstPerson = true;
         this.sprintMultiplier = 2;
         this.moveSpeed = 0.1;
         this.moveForward = false;
@@ -23,14 +24,51 @@ export class Player {
     }
 
     init() {
-        window.renderer.camera.position.set(this.playerBody.body.position.x, this.playerBody.body.position.y, this.playerBody.body.position.z);
-        this.playerBody.mesh.add(renderer.camera);
-        this.playerBody.angularDamping = 1;
+        this.playerBody.updateCallback = (body, mesh) => {
+            const q = body.quaternion;
+            const yaw = Math.atan2(2 * (q.w * q.y + q.z * q.x), 1 - 2 * (q.y * q.y + q.x * q.x));
 
+            const newQuaternion = new CANNON.Quaternion();
+            newQuaternion.setFromEuler(0, yaw, 0, 'YXZ');
 
+            body.quaternion.copy(newQuaternion);
+
+            const camOffset = this.firstPerson ? new CANNON.Vec3(0) : new CANNON.Vec3(0,1,2);
+            renderer.camera.position.copy(this.getCameraFrustum(world.world, this.playerBody.body.position, camOffset));
+        };
 
         document.addEventListener('keydown', this.onKeyDown.bind(this), false);
         document.addEventListener('keyup', this.onKeyUp.bind(this), false);
+    }
+
+    getCameraFrustum(world, startPos, cameraOffset) {
+        const desiredCameraPos = new CANNON.Vec3(
+            startPos.x + cameraOffset.x,
+            startPos.y + cameraOffset.y,
+            startPos.z + cameraOffset.z
+        );
+
+        const to = desiredCameraPos;
+        const result = new CANNON.RaycastResult();
+        const ray = new CANNON.Ray(startPos, to);
+        ray.intersectWorld(world, {
+            collisionFilterMask: ~0,
+            collisionFilterGroup: -1,
+        }, result);
+
+        if (result.hasHit) {
+            const hitPoint = result.hitPointWorld;
+
+            const hitNormal = result.hitNormalWorld;
+            const adjustedCameraPos = new CANNON.Vec3(
+                hitPoint.x - hitNormal.x * 0.1,
+                hitPoint.y - hitNormal.y * 0.1,
+                hitPoint.z - hitNormal.z * 0.1
+            );
+
+            return new THREE.Vector3(adjustedCameraPos.x, adjustedCameraPos.y, adjustedCameraPos.z);
+        }
+        return new THREE.Vector3(desiredCameraPos.x, desiredCameraPos.y, desiredCameraPos.z);
     }
 
     onKeyDown(event) {
@@ -57,6 +95,8 @@ export class Player {
             case 67: // C (crouch)
                 this.isCrouching = true;
                 break;
+            case 115: // F4 (third person)
+                this.firstPerson = !this.firstPerson;
         }
     }
 
@@ -128,13 +168,12 @@ export class Player {
     movement() {
         const targetRotation = new CANNON.Quaternion();
 
-        targetRotation.setFromEuler(0, 1 - (this.sensitivity * cursor.position.x/window.innerWidth * 2), 0, 'YXZ');
+        targetRotation.setFromEuler(0, 1 - (this.sensitivity * cursor.position.dx/window.innerWidth * 2), 0, 'YXZ');
         this.playerBody.body.quaternion.copy(targetRotation);
 
         const cameraTargetRotation = new CANNON.Quaternion();
 
-        const min = -Math.PI/2.2;
-        const max = Math.PI/2.2;
+        const min = -Math.PI/2.2, max = Math.PI/2.2;
         let yVal = 1 - (this.sensitivity*cursor.position.y/window.innerHeight * 2);
         yVal = yVal < min ? min : yVal > max ? max : yVal;
         cursor.position.y = (1-yVal) / 2 * window.innerHeight / this.sensitivity;
@@ -145,12 +184,5 @@ export class Player {
         this.handlePlayerMovement();
         this.handleJump();
         //this.handleCrouch();
-    }
-
-    static quat3toC(threeQuaternion) {
-        return new CANNON.Quaternion(threeQuaternion.x, threeQuaternion.y, threeQuaternion.z, threeQuaternion.w);
-    }
-    static quatCto3(cannonQuaternion) {
-        return new THREE.Quaternion(cannonQuaternion.x, cannonQuaternion.y, cannonQuaternion.z, cannonQuaternion.w);
     }
 }

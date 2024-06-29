@@ -31,5 +31,6 @@ function animate() {
         window.world.fixToAngle(window.mainPlayer.playerBody, 0);
     world.step();
     renderer.render();
+    debugTerminal.log(`playerBody pos: ${mainPlayer.playerBody.body.position}`);
 }
 animate();
