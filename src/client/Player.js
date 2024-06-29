@@ -33,9 +33,11 @@ export class Player {
 
             body.quaternion.copy(newQuaternion);
 
-            const camOffset = this.firstPerson ? new CANNON.Vec3(0) : new CANNON.Vec3(0,1,2);
-            renderer.camera.position.copy(this.getCameraFrustum(world.world, this.playerBody.body.position, camOffset));
+            const camOffset = this.firstPerson ? new CANNON.Vec3(0,0,0) : new CANNON.Vec3(0,1,2);
+            renderer.camera.position.copy(this.getCameraFrustum(world.world, this.playerBody.body.position.clone(), camOffset));
         };
+
+        this.playerBody.angularDamping = 1;
 
         document.addEventListener('keydown', this.onKeyDown.bind(this), false);
         document.addEventListener('keyup', this.onKeyUp.bind(this), false);
@@ -168,7 +170,7 @@ export class Player {
     movement() {
         const targetRotation = new CANNON.Quaternion();
 
-        targetRotation.setFromEuler(0, 1 - (this.sensitivity * cursor.position.dx/window.innerWidth * 2), 0, 'YXZ');
+        targetRotation.setFromEuler(0, 1 - (this.sensitivity * cursor.position.x/window.innerWidth * 2), 0, 'YXZ');
         this.playerBody.body.quaternion.copy(targetRotation);
 
         const cameraTargetRotation = new CANNON.Quaternion();
