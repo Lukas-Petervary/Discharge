@@ -1,9 +1,11 @@
+
 import ConnectionManager from './networking/ConnectionManager.js';
 import { Terminal } from "./terminal/Terminal.js";
 import { CustomCursor } from "./terminal/Cursor.js";
 import { Renderer } from "./render/Renderer.js";
 import { World } from "./render/World.js";
 import { Player } from "./client/Player.js";
+
 
 window.cursor = new CustomCursor();
 window.debugTerminal = new Terminal();
@@ -21,7 +23,13 @@ debugTerminal.log('Finished initializing');
 window.connectionManager = new ConnectionManager();
 connectionManager.initialize();
 
-debugTerminal.log('Finished instantiating connection')
+const ambientLight = new THREE.AmbientLight(0xffffff, 1);
+world.renderer.scene.add(ambientLight);
+
+
+
+debugTerminal.log('Finished instantiating connection');
+world.loadGLTFModel('../../assets/terrain/maps/portbase/scene.gltf');
 
 function animate() {
     requestAnimationFrame(animate);
@@ -31,5 +39,6 @@ function animate() {
         window.world.fixToAngle(window.mainPlayer.playerBody, 0);
     world.step();
     renderer.render();
+    //debugTerminal.log(`playerBody pos: ${mainPlayer.playerBody.body.position}`);
 }
 animate();
