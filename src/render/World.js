@@ -142,16 +142,12 @@ export class World {
                             this.world.addBody(body);
 
                             // Create wireframe and add to the scene
-                            const wireframe = this.createWireframe(child.geometry); // Pass Three.js geometry
-                            wireframe.position.copy(worldPosition); // Position wireframe at the same position as the mesh
-                            wireframe.quaternion.copy(child.quaternion); // Apply mesh's quaternion rotation
-                            this.renderer.scene.add(wireframe);
+
 
                             // Store reference to the mesh and Cannon.js body for later use
                             this.renderer.objects.push({
                                 mesh: child,
                                 body: body,
-                                wireframe: wireframe, // Store wireframe for later manipulation or removal
                             });
                         } else {
                             console.warn('Unable to create Cannon.js shape for mesh:', child);
@@ -230,73 +226,7 @@ export class World {
         }
     }
 
-// Function to create wireframe representation for Cannon.js shape
-    createWireframe(cannonShape, color = 0x00ff00) {
-        const wireframe = new THREE.WireframeGeometry(this.convertCannonShapeToBufferGeometry(cannonShape));
-        const line = new THREE.LineSegments(wireframe);
-        line.material.color.set(color);
-        return line;
-    }
 
-    convertCannonShapeToBufferGeometry(cannonShape) {
-        const vertices = [];
-        const indices = [];
-
-        if (cannonShape instanceof CANNON.Box) {
-            const halfExtents = cannonShape.halfExtents;
-            const verticesArray = [
-                [-halfExtents.x, -halfExtents.y, -halfExtents.z],
-                [halfExtents.x, -halfExtents.y, -halfExtents.z],
-                [halfExtents.x, halfExtents.y, -halfExtents.z],
-                [-halfExtents.x, halfExtents.y, -halfExtents.z],
-                [-halfExtents.x, -halfExtents.y, halfExtents.z],
-                [halfExtents.x, -halfExtents.y, halfExtents.z],
-                [halfExtents.x, halfExtents.y, halfExtents.z],
-                [-halfExtents.x, halfExtents.y, halfExtents.z],
-            ];
-
-            const indicesArray = [
-                [0, 1, 2, 3],
-                [4, 5, 6, 7],
-                [0, 4, 5, 1],
-                [1, 5, 6, 2],
-                [2, 6, 7, 3],
-                [3, 7, 4, 0],
-            ];
-
-            verticesArray.forEach((vertex) => {
-                vertices.push(new THREE.Vector3(vertex[0], vertex[1], vertex[2]));
-            });
-
-            indicesArray.forEach((index) => {
-                indices.push(index[0], index[1], index[2]);
-                indices.push(index[2], index[3], index[0]);
-            });
-        } else if (cannonShape instanceof CANNON.ConvexPolyhedron) {
-            const faceNormals = cannonShape.faceNormals;
-            const faces = cannonShape.faces;
-            const verticesArray = cannonShape.vertices;
-
-            verticesArray.forEach((vertex) => {
-                vertices.push(new THREE.Vector3(vertex.x, vertex.y, vertex.z));
-            });
-
-            faces.forEach((face) => {
-                const edge = [face[0], face[1], face[2], face[3]];
-
-                indices.push(edge[0], edge[1]);
-                indices.push(edge[1], edge[2]);
-                indices.push(edge[2], edge[3]);
-                indices.push(edge[3], edge[0]);
-            });
-        }
-
-        const geometry = new THREE.BufferGeometry();
-        geometry.setFromPoints(vertices);
-        geometry.setIndex(indices);
-
-        return geometry;
-    }
 
 
 
