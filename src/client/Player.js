@@ -92,10 +92,11 @@ export class Player {
     }
 
     handleJump() {
+        this.playerBody.physicsMesh.body.position.set(0,0,0);
         if (this.isJumping && this.canJump) {
             // Apply jump force (example using applyImpulse)
             const jumpImpulse = new CANNON.Vec3(0, this.jumpSpeed, 0);
-            this.playerBody.body.applyImpulse(jumpImpulse, this.playerBody.body.position);
+            this.playerBody.physicsMesh.body.applyImpulse(jumpImpulse, this.playerBody.physicsMesh.body.position);
 
             // Prevent jumping until the player lands again
             this.canJump = false;
@@ -118,16 +119,16 @@ export class Player {
         moveDirection.x = this.moveLeft ? -1 : this.moveRight ? 1 : 0;
         if (moveDirection.length() > 0) moveDirection.normalize();
 
-        const rotatedMovement = this.playerBody.body.quaternion.vmult(moveDirection);
+        const rotatedMovement = this.playerBody.physicsMesh.body.quaternion.vmult(moveDirection);
 
         const speed = this.isSprinting ? maxSprintSpeed : maxWalkSpeed;
         const desiredVelocity = rotatedMovement.scale(speed);
-        desiredVelocity.y = this.playerBody.body.velocity.y;
+        desiredVelocity.y = this.playerBody.physicsMesh.body.velocity.y;
 
-        const dV = desiredVelocity.vsub(this.playerBody.body.velocity);
-        const force = dV.scale(this.playerBody.body.mass * acceleration);
+        const dV = desiredVelocity.vsub(this.playerBody.physicsMesh.body.velocity);
+        const force = dV.scale(this.playerBody.physicsMesh.body.mass * acceleration);
 
-        this.playerBody.body.applyForce(force, this.playerBody.body.position);
+        this.playerBody.physicsMesh.body.applyForce(force, this.playerBody.physicsMesh.body.position);
     }
 
     updateCameraRotation() {
@@ -142,7 +143,7 @@ export class Player {
         // apply pitch and yaw to camera
         const lookVec = new CANNON.Quaternion();
         lookVec.setFromEuler(0, this.yaw, 0, 'YXZ');
-        this.playerBody.body.quaternion.copy(lookVec);
+        this.playerBody.physicsMesh.body.quaternion.copy(lookVec);
         lookVec.setFromEuler(this.pitch, this.yaw, 0, 'YXZ');
         renderer.camera.quaternion.copy(lookVec);
     }
@@ -151,12 +152,12 @@ export class Player {
         const pitchQuaternion = new THREE.Quaternion();
         pitchQuaternion.setFromAxisAngle(new THREE.Vector3(1, 0, 0), this.pitch);
 
-        const combinedQuaternion = this.playerBody.mesh.quaternion.clone().multiply(pitchQuaternion);
+        const combinedQuaternion = this.playerBody.physicsMesh.mesh.quaternion.clone().multiply(pitchQuaternion);
         const offset = camOffset.clone().applyQuaternion(combinedQuaternion);
-        const desiredCamPos = new CANNON.Vec3().copy(this.playerBody.mesh.position).vadd(offset);
+        const desiredCamPos = new CANNON.Vec3().copy(this.playerBody.physicsMesh.mesh.position).vadd(offset);
 
         // raytracing not working ?? ty cannon
-        const ray = new CANNON.Ray(this.playerBody.body.position, new CANNON.Vec3().copy(desiredCamPos));
+        const ray = new CANNON.Ray(this.playerBody.physicsMesh.body.position, new CANNON.Vec3().copy(desiredCamPos));
         ray._updateDirection();
         const result = new CANNON.RaycastResult();
 
@@ -164,13 +165,13 @@ export class Player {
         const finalPos = collision ? result.hitPointWorld : desiredCamPos;
 
         renderer.camera.position.copy(finalPos);
-        renderer.camera.lookAt(this.playerBody.mesh.position);
+        renderer.camera.lookAt(this.playerBody.physicsMesh.mesh.position);
     }
 
     movement() {
         this.updateCameraRotation();
         if (this.firstPerson)
-            renderer.camera.position.copy(this.playerBody.mesh.position);
+            renderer.camera.position.copy(this.playerBody.physicsMesh.mesh.position);
         else
             this.updateCameraFrustum(new THREE.Vector3(0,0,5));
 

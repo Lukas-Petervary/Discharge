@@ -36,7 +36,7 @@ function animate() {
     if(window.cursor.isLocked)
         window.mainPlayer.movement();
     else
-        window.world.fixToAngle(window.mainPlayer.playerBody, 0);
+        window.world.fixToAngle(window.mainPlayer.playerBody.physicsMesh, 0);
     world.step();
     renderer.render();
     //debugTerminal.log(`playerBody pos: ${mainPlayer.playerBody.body.position}`);
