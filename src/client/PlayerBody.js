@@ -23,12 +23,12 @@ export class PlayerBody {
         // Cannon capsule object
         const capsuleBody = new CANNON.Body({
             mass: 1,
-            position: new CANNON.Vec3(0, 0, 0),
+            position: new CANNON.Vec3(0, height / 2, 0),
             material: this.playerMaterial,
         });
 
-        const sphereShape = new CANNON.Sphere(height/2);
-        const cylinderShape = new CANNON.Cylinder(height/2, height/2, height/2, 16);
+        const sphereShape = new CANNON.Sphere(height / 2);
+        const cylinderShape = new CANNON.Cylinder(height / 2, height / 2, height / 2, 16);
 
         capsuleBody.addShape(sphereShape, new CANNON.Vec3(0, height / 2, 0));
         capsuleBody.addShape(sphereShape, new CANNON.Vec3(0, -height / 2, 0));
@@ -38,14 +38,14 @@ export class PlayerBody {
         const texture = new THREE.TextureLoader().load('../../assets/terrain/Skyboxes/SkySkybox.png');
         const capsuleMaterial = new THREE.MeshPhongMaterial({ map: texture });
 
-        const capsuleGeometry = new THREE.CylinderGeometry(height/2, height/2, height, 8);
+        const capsuleGeometry = new THREE.CylinderGeometry(height / 2, height / 2, height, 8);
         const capsuleMesh = new THREE.Mesh(capsuleGeometry, capsuleMaterial);
 
-        const topSphereGeometry = new THREE.SphereGeometry(height/2, 32, 32);
+        const topSphereGeometry = new THREE.SphereGeometry(height / 2, 32, 32);
         const topSphereMesh = new THREE.Mesh(topSphereGeometry, capsuleMaterial);
         topSphereMesh.position.y = height / 2;
 
-        const bottomSphereGeometry = new THREE.SphereGeometry(height/2, 32, 32);
+        const bottomSphereGeometry = new THREE.SphereGeometry(height / 2, 32, 32);
         const bottomSphereMesh = new THREE.Mesh(bottomSphereGeometry, capsuleMaterial);
         bottomSphereMesh.position.y = -height / 2;
 
@@ -57,14 +57,14 @@ export class PlayerBody {
 
         // Integrate callbacks
         const contactNormal = new CANNON.Vec3();
-        const upAxis = new CANNON.Vec3(0,1,0);
+        const upAxis = new CANNON.Vec3(0, 1, 0);
         const addEventListeners = (body, mesh) => {
             body.addEventListener("collide", (e) => {
                 let contact = e.contact;
 
                 contact.bi.id === body.id ? contact.ni.negate(contactNormal) : contactNormal.copy(contact.ni);
 
-                if(contactNormal.dot(upAxis) > 0.5)
+                if (contactNormal.dot(upAxis) > 0.5)
                     this.onGround = true;
             });
         };
@@ -76,7 +76,7 @@ export class PlayerBody {
             newQuaternion.setFromEuler(0, yaw, 0, 'YXZ');
 
             body.quaternion.copy(newQuaternion);
-            body.angularVelocity.set(0,0,0);
+            body.angularVelocity.set(0, 0, 0);
         };
 
         // Create Physics Object

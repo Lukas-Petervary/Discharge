@@ -92,7 +92,6 @@ export class Player {
     }
 
     handleJump() {
-        this.playerBody.physicsMesh.body.position.set(0,0,0);
         if (this.isJumping && this.canJump) {
             // Apply jump force (example using applyImpulse)
             const jumpImpulse = new CANNON.Vec3(0, this.jumpSpeed, 0);
@@ -103,15 +102,6 @@ export class Player {
         }
     }
 
-    /*handleCrouch() {
-        if (this.isCrouching) {
-            playerBody.scale.y = 0.5; // Scale down playerBody height
-            playerBody.position.y = crouchingHeight / 2; // Adjust position when crouching
-        } else {
-            playerBody.scale.y = 1; // Reset to full height
-            playerBody.position.y = standingHeight / 2; // Adjust position when standing
-        }
-    }*/
     handlePlayerMovement() {
         const moveDirection = new CANNON.Vec3(0, 0, 0);
 
@@ -133,19 +123,22 @@ export class Player {
 
     updateCameraRotation() {
         // clamp camera pitch
-        const min = -Math.PI/2.2, max = Math.PI/2.2;
-        this.pitch = this.sensitivity * (1 - cursor.position.y/window.innerHeight*2);
+        const min = -Math.PI / 2.2, max = Math.PI / 2.2;
+        this.pitch = this.sensitivity * (1 - cursor.position.y / window.innerHeight * 2);
         this.pitch = this.pitch < min ? min : this.pitch > max ? max : this.pitch;
-        cursor.position.y = (1 - this.pitch/this.sensitivity) * window.innerHeight / 2;
+        cursor.position.y = (1 - this.pitch / this.sensitivity) * window.innerHeight / 2;
 
-        this.yaw = this.sensitivity * (1 - cursor.position.x/window.innerWidth*2);
+        this.yaw = this.sensitivity * (1 - cursor.position.x / window.innerWidth * 2);
 
         // apply pitch and yaw to camera
         const lookVec = new CANNON.Quaternion();
         lookVec.setFromEuler(0, this.yaw, 0, 'YXZ');
-        this.playerBody.physicsMesh.body.quaternion.copy(lookVec);
+        const playerRotation = lookVec.clone();
         lookVec.setFromEuler(this.pitch, this.yaw, 0, 'YXZ');
         renderer.camera.quaternion.copy(lookVec);
+
+        // Apply yaw rotation to player body
+        this.playerBody.physicsMesh.body.quaternion.copy(playerRotation);
     }
 
     updateCameraFrustum(camOffset) {
@@ -154,9 +147,9 @@ export class Player {
 
         const combinedQuaternion = this.playerBody.physicsMesh.mesh.quaternion.clone().multiply(pitchQuaternion);
         const offset = camOffset.clone().applyQuaternion(combinedQuaternion);
-        const desiredCamPos = new CANNON.Vec3().copy(this.playerBody.physicsMesh.mesh.position).vadd(offset);
+        const desiredCamPos = new THREE.Vector3().copy(this.playerBody.physicsMesh.mesh.position).add(offset);
 
-        // raytracing not working ?? ty cannon
+        // Ray tracing for collision detection (to prevent camera clipping)
         const ray = new CANNON.Ray(this.playerBody.physicsMesh.body.position, new CANNON.Vec3().copy(desiredCamPos));
         ray._updateDirection();
         const result = new CANNON.RaycastResult();
@@ -173,7 +166,7 @@ export class Player {
         if (this.firstPerson)
             renderer.camera.position.copy(this.playerBody.physicsMesh.mesh.position);
         else
-            this.updateCameraFrustum(new THREE.Vector3(0,0,5));
+            this.updateCameraFrustum(new THREE.Vector3(0, 0, 5));
 
         this.handlePlayerMovement();
         this.handleJump();
