@@ -1,3 +1,5 @@
+import {PlayerBody} from "./PlayerBody.js";
+
 const maxWalkSpeed = 5;
 const maxSprintSpeed = 10;
 const acceleration = 2;
@@ -6,7 +8,7 @@ const jumpSpeed = 10;
 export class Player {
     constructor() {
         // Player Body Mesh
-        this.playerBody = world.addCapsule(0.5, this.standingHeight, {x: 0, y: 0, z: 0});
+        this.playerBody = PlayerBody.addCapsule(1,2, {x: 0, y: 0, z:0});
         this.sensitivity = 3;
 
         // Player look direction
@@ -48,6 +50,7 @@ export class Player {
             contact.bi.id === this.playerBody.body.id ? contact.ni.negate(contactNormal) : contactNormal.copy(contact.ni);
 
             this.canJump = contactNormal.dot(upAxis) > 0.5;
+            debugTerminal.log(`canJump: ${mainPlayer.canJump}`);
         });
 
         document.addEventListener('keydown', this.onKeyDown.bind(this), false);
@@ -138,10 +141,10 @@ export class Player {
 
         const speed = this.isSprinting ? maxSprintSpeed : maxWalkSpeed;
         const desiredVelocity = rotatedMovement.scale(speed);
-        desiredVelocity.y = this.playerBody.body.velocity.y;
 
         const dV = desiredVelocity.vsub(this.playerBody.body.velocity);
         const force = dV.scale(this.playerBody.body.mass * acceleration);
+        force.y = 0;
 
         this.playerBody.body.applyForce(force, this.playerBody.body.position);
     }
