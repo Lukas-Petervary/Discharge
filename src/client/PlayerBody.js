@@ -1,6 +1,7 @@
 import {PhysicsMesh} from "../render/PhysicsMesh.js";
 
 const height = 2;
+const crouchHeight = 1;
 
 export class PlayerBody {
     constructor() {
@@ -16,8 +17,8 @@ export class PlayerBody {
     init() {
         world.world.addContactMaterial(
             new CANNON.ContactMaterial(this.playerMaterial, world.groundMaterial, {
-                friction: 0.0,
-                restitution: 0.0,
+                friction: 0.4,
+                restitution: 0.4
             })
         );
 
@@ -63,15 +64,17 @@ export class PlayerBody {
         const sphereShape = new CANNON.Sphere(height/2);
         const cylinderShape = new CANNON.Cylinder(height/2, height/2, height/2, 16);
 
-        capsuleBody.addShape(sphereShape, new CANNON.Vec3(0, height / 2, 0));
-        capsuleBody.addShape(sphereShape, new CANNON.Vec3(0, -height / 2, 0));
+        //capsuleBody.addShape(sphereShape, new CANNON.Vec3(0, height / 2, 0));
+        //capsuleBody.addShape(sphereShape, new CANNON.Vec3(0, -height / 2, 0));
         capsuleBody.addShape(cylinderShape, new CANNON.Vec3(0, 0, 0), new CANNON.Quaternion().setFromAxisAngle(new CANNON.Vec3(1, 0, 0), Math.PI / 2));
         this.body = capsuleBody;
     }
 
     addMesh() {
+        const texture = new THREE.TextureLoader().load('../../assets/terrain/Skyboxes/SkySkybox.png');
+        const capsuleMaterial = new THREE.MeshPhongMaterial({ map: texture });
+
         const capsuleGeometry = new THREE.CylinderGeometry(height/2, height/2, height, 8);
-        const capsuleMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
         const capsuleMesh = new THREE.Mesh(capsuleGeometry, capsuleMaterial);
 
         const topSphereGeometry = new THREE.SphereGeometry(height/2, 32, 32);
@@ -86,6 +89,9 @@ export class PlayerBody {
         capsuleGroup.add(capsuleMesh);
         capsuleGroup.add(topSphereMesh);
         capsuleGroup.add(bottomSphereMesh);
+        capsuleGroup.castShadow = true;
+        capsuleGroup.position.set(0, 0, 0);
+
         this.mesh = capsuleGroup;
     }
 }
