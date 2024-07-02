@@ -1,5 +1,3 @@
-import {PlayerBody} from "./PlayerBody.js";
-
 const maxWalkSpeed = 5;
 const maxSprintSpeed = 10;
 const acceleration = 2;
@@ -8,7 +6,7 @@ const jumpSpeed = 10;
 export class Player {
     constructor() {
         // Player Body Mesh
-        this.playerBody = PlayerBody.addCapsule(1,2, {x: 0, y: 0, z:0});
+        this.playerBody = world.addSphere(2, {x: 0, y: 0, z:0});
         this.sensitivity = 3;
 
         // Player look direction
@@ -25,14 +23,12 @@ export class Player {
         this.isCrouching = false;
         this.isSprinting = false;
         this.canJump = true;
-        this.standingHeight = 1.8; // Standing height of the playerBody
-        this.crouchingHeight = .5;
 
         this.init();
     }
 
     init() {
-        this.playerBody.updateCallback = (body, mesh) => {
+        /*this.playerBody.updateCallback = (body, mesh) => {
             const q = body.quaternion;
             const yaw = Math.atan2(2 * (q.w * q.y + q.z * q.x), 1 - 2 * (q.y * q.y + q.x * q.x));
 
@@ -41,7 +37,7 @@ export class Player {
 
             body.quaternion.copy(newQuaternion);
             body.angularVelocity.set(0,0,0);
-        };
+        };*/
         const contactNormal = new CANNON.Vec3();
         const upAxis = new CANNON.Vec3(0,1,0);
         this.playerBody.body.addEventListener("collide", (e) => {
@@ -144,9 +140,9 @@ export class Player {
 
         const dV = desiredVelocity.vsub(this.playerBody.body.velocity);
         const force = dV.scale(this.playerBody.body.mass * acceleration);
-        force.y = 0;
+        force.y = 0.1;
 
-        this.playerBody.body.applyForce(force, this.playerBody.body.position);
+        this.playerBody.body.applyForce(force, this.playerBody.body.position.vadd(new CANNON.Vec3(0,0.1,0)));
     }
 
     updateCameraRotation() {

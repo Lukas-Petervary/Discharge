@@ -13,8 +13,8 @@ export class World {
         this.defaultMaterial = new CANNON.Material('default');
         this.groundMaterial = new CANNON.Material('groundMaterial');
         this.contactMaterial = new CANNON.ContactMaterial(this.defaultMaterial, this.groundMaterial, {
-            friction: 0.4,
-            restitution: 0.6,
+            friction: 0,
+            restitution: 0,
         });
         this.world.addContactMaterial(this.contactMaterial);
     }

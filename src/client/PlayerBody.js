@@ -87,6 +87,8 @@ export class PlayerBody {
             friction: 0,
             restitution: 0
         });
+        world.world.addContactMaterial(this.contactMaterial);
+
         const capsuleBody = new CANNON.Body({
             mass: 1,
             position: new CANNON.Vec3(position.x, position.y, position.z),
