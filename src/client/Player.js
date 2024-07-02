@@ -1,18 +1,22 @@
+import {PlayerBody} from "./PlayerBody.js";
+
+const maxWalkSpeed = 5;
+const maxSprintSpeed = 10;
+const acceleration = 2;
+
 export class Player {
     constructor() {
         // Player Body Mesh
-        this.playerBody = world.addCapsule(0.5, this.standingHeight, {x: 0, y: 0, z: 0});
+        this.playerBody = new PlayerBody();
         this.sensitivity = 3;
 
-        // Player look direction
+        // Player state
         this.pitch = 0;
         this.yaw = 0;
 
         // Movement variables
         this.jumpSpeed = 2;
         this.firstPerson = true;
-        this.sprintMultiplier = 2;
-        this.moveSpeed = 0.1;
         this.moveForward = false;
         this.moveBackward = false;
         this.moveLeft = false;
@@ -28,19 +32,6 @@ export class Player {
     }
 
     init() {
-        this.playerBody.updateCallback = (body, mesh) => {
-            const q = body.quaternion;
-            const yaw = Math.atan2(2 * (q.w * q.y + q.z * q.x), 1 - 2 * (q.y * q.y + q.x * q.x));
-
-            const newQuaternion = new CANNON.Quaternion();
-            newQuaternion.setFromEuler(0, yaw, 0, 'YXZ');
-
-            body.quaternion.copy(newQuaternion);
-            body.angularVelocity.set(0,0,0);
-        };
-
-        //this.playerBody.angularDamping = 1;
-
         document.addEventListener('keydown', this.onKeyDown.bind(this), false);
         document.addEventListener('keyup', this.onKeyUp.bind(this), false);
     }
@@ -102,11 +93,12 @@ export class Player {
 
     handleJump() {
         if (this.isJumping && this.canJump) {
-            this.playerBody.body.position.y += this.jumpSpeed;
+            // Apply jump force (example using applyImpulse)
+            const jumpImpulse = new CANNON.Vec3(0, this.jumpSpeed, 0);
+            this.playerBody.body.applyImpulse(jumpImpulse, this.playerBody.body.position);
+
+            // Prevent jumping until the player lands again
             this.canJump = false;
-        }
-        if (this.playerBody.body.position.y <= 0) {
-            this.canJump = true;
         }
     }
 
@@ -120,23 +112,22 @@ export class Player {
         }
     }*/
     handlePlayerMovement() {
-        const moveDirection = new THREE.Vector3();
+        const moveDirection = new CANNON.Vec3(0, 0, 0);
 
-        if (this.moveForward) moveDirection.z = -1;
-        if (this.moveBackward) moveDirection.z = 1;
-        if (this.moveLeft) moveDirection.x = -1;
-        if (this.moveRight) moveDirection.x = 1;
+        moveDirection.z = this.moveForward ? -1 : this.moveBackward ? 1 : 0;
+        moveDirection.x = this.moveLeft ? -1 : this.moveRight ? 1 : 0;
+        if (moveDirection.length() > 0) moveDirection.normalize();
 
-        moveDirection.applyQuaternion(this.playerBody.body.quaternion);
-        moveDirection.normalize(); // Normalize the direction vector to avoid faster diagonal movement
+        const rotatedMovement = this.playerBody.body.quaternion.vmult(moveDirection);
 
-        const speed = this.moveSpeed * (this.isSprinting ? this.sprintMultiplier : 1);
-        moveDirection.multiplyScalar(speed);
+        const speed = this.isSprinting ? maxSprintSpeed : maxWalkSpeed;
+        const desiredVelocity = rotatedMovement.scale(speed);
+        desiredVelocity.y = this.playerBody.body.velocity.y;
 
-        // Apply force to the player body
-        const force = new CANNON.Vec3(moveDirection.x, 0, moveDirection.z);
-        this.playerBody.body.position.x += force.x;
-        this.playerBody.body.position.z += force.z;
+        const dV = desiredVelocity.vsub(this.playerBody.body.velocity);
+        const force = dV.scale(this.playerBody.body.mass * acceleration);
+
+        this.playerBody.body.applyForce(force, this.playerBody.body.position);
     }
 
     updateCameraRotation() {
