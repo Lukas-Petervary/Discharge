@@ -165,7 +165,7 @@
                             scene.add(gltf.scene);
 
                             gltf.scene.traverse((child) => {
-                                if (child.type == 'Mesh') {
+                                if (child.type === 'Mesh') {
                                     child.castShadow = true;
                                     child.receiveShadow = true;
                                     child.material.side = THREE.FrontSide;
