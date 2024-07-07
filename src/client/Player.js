@@ -1,3 +1,5 @@
+import { PlayerBody } from "./PlayerBody.js";
+
 const maxWalkSpeed = 5;
 const maxSprintSpeed = 10;
 const acceleration = 2;
@@ -6,7 +8,7 @@ const jumpSpeed = 10;
 export class Player {
     constructor() {
         // Player Body Mesh
-        this.playerBody = world.addSphere(2, {x: 0, y: 0, z:0});
+        this.playerBody = new PlayerBody();
         this.sensitivity = 3;
 
         // Player look direction
@@ -28,27 +30,6 @@ export class Player {
     }
 
     init() {
-        /*this.playerBody.updateCallback = (body, mesh) => {
-            const q = body.quaternion;
-            const yaw = Math.atan2(2 * (q.w * q.y + q.z * q.x), 1 - 2 * (q.y * q.y + q.x * q.x));
-
-            const newQuaternion = new CANNON.Quaternion();
-            newQuaternion.setFromEuler(0, yaw, 0, 'YXZ');
-
-            body.quaternion.copy(newQuaternion);
-            body.angularVelocity.set(0,0,0);
-        };*/
-        const contactNormal = new CANNON.Vec3();
-        const upAxis = new CANNON.Vec3(0,1,0);
-        this.playerBody.body.addEventListener("collide", (e) => {
-            let contact = e.contact;
-
-            contact.bi.id === this.playerBody.body.id ? contact.ni.negate(contactNormal) : contactNormal.copy(contact.ni);
-
-            this.canJump = contactNormal.dot(upAxis) > 0.5;
-            debugTerminal.log(`canJump: ${mainPlayer.canJump}`);
-        });
-
         document.addEventListener('keydown', this.onKeyDown.bind(this), false);
         document.addEventListener('keyup', this.onKeyUp.bind(this), false);
     }
@@ -110,8 +91,8 @@ export class Player {
 
     handleJump() {
         if (this.isJumping && this.canJump) {
-            const jumpImpulse = new CANNON.Vec3(0, jumpSpeed, 0);
-            this.playerBody.body.applyImpulse(jumpImpulse, this.playerBody.body.position);
+            const jumpImpulse = new Ammo.btVector3(0, jumpSpeed, 0);
+            this.playerBody.physicsMesh.body.applyCentralImpulse(jumpImpulse);
 
             this.canJump = false;
         }
@@ -127,39 +108,40 @@ export class Player {
         }
     }*/
     handlePlayerMovement() {
-        const moveDirection = new CANNON.Vec3(0, 0, 0);
+        const moveDirection = new Ammo.btVector3(0, 0, 0);
 
-        moveDirection.z = this.moveForward ? -1 : this.moveBackward ? 1 : 0;
-        moveDirection.x = this.moveLeft ? -1 : this.moveRight ? 1 : 0;
+        moveDirection.setZ(this.moveForward ? -1 : this.moveBackward ? 1 : 0);
+        moveDirection.setX(this.moveLeft ? -1 : this.moveRight ? 1 : 0);
         if (moveDirection.length() > 0) moveDirection.normalize();
 
-        const rotatedMovement = this.playerBody.body.quaternion.vmult(moveDirection);
+        const rotatedMovement = this.playerBody.physicsMesh.body.getWorldTransform().getRotation().op_mul(moveDirection);
 
         const speed = this.isSprinting ? maxSprintSpeed : maxWalkSpeed;
-        const desiredVelocity = rotatedMovement.scale(speed);
+        const desiredVelocity = rotatedMovement.op_mul(speed);
 
-        const dV = desiredVelocity.vsub(this.playerBody.body.velocity);
-        const force = dV.scale(this.playerBody.body.mass * acceleration);
-        force.y = 0.1;
+        const currentVelocity = this.playerBody.physicsMesh.body.getLinearVelocity();
+        const dV = desiredVelocity.op_sub(currentVelocity);
+        const force = dV.op_mul(this.playerBody.physicsMesh.body.getInvMass() * acceleration);
+        force.setY(0.1);
 
-        this.playerBody.body.applyForce(force, this.playerBody.body.position.vadd(new CANNON.Vec3(0,0.1,0)));
+        this.playerBody.physicsMesh.body.applyCentralForce(force);
     }
 
     updateCameraRotation() {
         // clamp camera pitch
-        const min = -Math.PI/2.2, max = Math.PI/2.2;
-        this.pitch = this.sensitivity * (1 - cursor.position.y/window.innerHeight*2);
+        const min = -Math.PI / 2.2, max = Math.PI / 2.2;
+        this.pitch = this.sensitivity * (1 - cursor.position.y / window.innerHeight * 2);
         this.pitch = this.pitch < min ? min : this.pitch > max ? max : this.pitch;
-        cursor.position.y = (1 - this.pitch/this.sensitivity) * window.innerHeight / 2;
+        cursor.position.y = (1 - this.pitch / this.sensitivity) * window.innerHeight / 2;
 
-        this.yaw = this.sensitivity * (1 - cursor.position.x/window.innerWidth*2);
+        this.yaw = this.sensitivity * (1 - cursor.position.x / window.innerWidth * 2);
 
         // apply pitch and yaw to camera
-        const lookVec = new CANNON.Quaternion();
-        lookVec.setFromEuler(0, this.yaw, 0, 'YXZ');
-        this.playerBody.body.quaternion.copy(lookVec);
-        lookVec.setFromEuler(this.pitch, this.yaw, 0, 'YXZ');
-        renderer.camera.quaternion.copy(lookVec);
+        const lookVec = new Ammo.btQuaternion();
+        lookVec.setEulerZYX(0, this.yaw, 0);
+        this.playerBody.physicsMesh.body.getWorldTransform().setRotation(lookVec);
+        lookVec.setEulerZYX(this.pitch, this.yaw, 0);
+        g_Renderer.camera.quaternion.copy(new THREE.Quaternion(lookVec.x(), lookVec.y(), lookVec.z(), lookVec.w()));
     }
 
     updateCameraFrustum(camOffset) {
@@ -168,26 +150,27 @@ export class Player {
 
         const combinedQuaternion = this.playerBody.mesh.quaternion.clone().multiply(pitchQuaternion);
         const offset = camOffset.clone().applyQuaternion(combinedQuaternion);
-        const desiredCamPos = new CANNON.Vec3().copy(this.playerBody.mesh.position).vadd(offset);
+        const desiredCamPos = new THREE.Vector3().copy(this.playerBody.mesh.position).add(offset);
 
-        // raytracing not working ?? ty cannon
-        const ray = new CANNON.Ray(this.playerBody.body.position, new CANNON.Vec3().copy(desiredCamPos));
-        ray._updateDirection();
-        const result = new CANNON.RaycastResult();
+        // raytracing not working ?? ty ammo
+        const ray = new Ammo.btCollisionWorld.ClosestRayResultCallback(
+            new Ammo.btVector3(this.playerBody.physicsMesh.body.getWorldTransform().getOrigin()),
+            new Ammo.btVector3(desiredCamPos.x, desiredCamPos.y, desiredCamPos.z)
+        );
+        g_World.physicsWorld.rayTest(ray.m_rayFromWorld, ray.m_rayToWorld, ray);
 
-        const collision = ray.intersectBodies(world.world.bodies, result);
-        const finalPos = collision ? result.hitPointWorld : desiredCamPos;
+        const finalPos = ray.hasHit() ? ray.m_hitPointWorld : desiredCamPos;
 
-        renderer.camera.position.copy(finalPos);
-        renderer.camera.lookAt(this.playerBody.mesh.position);
+        g_Renderer.camera.position.copy(finalPos);
+        g_Renderer.camera.lookAt(this.playerBody.mesh.position);
     }
 
     movement() {
         this.updateCameraRotation();
         if (this.firstPerson)
-            renderer.camera.position.copy(this.playerBody.mesh.position);
+            g_Renderer.camera.position.copy(this.playerBody.mesh.position);
         else
-            this.updateCameraFrustum(new THREE.Vector3(0,0,5));
+            this.updateCameraFrustum(new THREE.Vector3(0, 0, 5));
 
         this.handlePlayerMovement();
         this.handleJump();

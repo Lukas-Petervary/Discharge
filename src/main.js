@@ -5,38 +5,41 @@ import { Renderer } from "./render/Renderer.js";
 import { World } from "./render/World.js";
 import { Player } from "./client/Player.js";
 
+window.addEventListener("DOMContentLoaded", () => {
+    window.cursor = new CustomCursor();
+    window.debugTerminal = new Terminal();
 
-window.cursor = new CustomCursor();
-window.debugTerminal = new Terminal();
+    window.g_Renderer = new Renderer();
+    //window.g_World = new World();
 
-window.renderer = new Renderer();
-renderer.camera.position.set(0, 1.5, 2);
+    const sphereMesh = new THREE.Mesh(
+        new THREE.SphereGeometry(2, 5, 5),
+        new THREE.MeshBasicMaterial({ color: 0x00ff00 })
+    );
+    sphereMesh.position.set(0, 0, 2);
 
-window.world = new World(renderer);
-world.addSphere(1, { x: 0, y: 5, z: 0 });
+    g_Renderer.scene.add(sphereMesh);
 
-window.mainPlayer = new Player();
-
-debugTerminal.log('Finished initializing');
-
-window.connectionManager = new ConnectionManager();
-connectionManager.initialize();
-
-const ambientLight = new THREE.AmbientLight(0xffffff, 1);
-world.renderer.scene.add(ambientLight);
+    Ammo().then((Ammo) => {
 
 
+        //window.mainPlayer = new Player();
 
-debugTerminal.log('Finished instantiating connection');
-world.loadGLTFModel('../../assets/terrain/maps/portbase/scene.gltf');
+        debugTerminal.log('Finished initializing');
+
+        //window.connectionManager = new ConnectionManager();
+        //connectionManager.initialize();
+
+        //g_World.loadGLTFModel('../../assets/terrain/maps/portbase/scene.gltf');
+    });
+    animate()
+});
 
 function animate() {
-    requestAnimationFrame(animate);
+    window.requestAnimationFrame(animate);
     if(window.cursor.isLocked)
-        window.mainPlayer.movement();
-    else
-        window.world.fixToAngle(window.mainPlayer.playerBody, 0);
-    world.step();
-    renderer.render();
+        //window.mainPlayer.movement();
+
+    //g_World.step();
+    g_Renderer.render();
 }
-animate();

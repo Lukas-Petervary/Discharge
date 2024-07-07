@@ -5,8 +5,6 @@ export class Renderer {
         this.camera.position.set(0, 1, 0);
         this.sceneRenderer = new THREE.WebGLRenderer({ antialias: true });
 
-        this.objects = [];
-
         this.init();
     };
 
