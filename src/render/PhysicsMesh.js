@@ -9,24 +9,15 @@ export class PhysicsMesh {
     add() {
         if (this.addCallback)
             this.addCallback(this.body, this.mesh);
-
-        g_World.physicsWorld.addRigidBody(this.body);
-        g_Renderer.scene.add(this.mesh);
-        g_World.objects.push(this);
+        world.world.addBody(this.body);
+        renderer.scene.add(this.mesh);
+        world.objects.push(this);
     }
 
     update() {
         if (this.updateCallback)
             this.updateCallback(this.body, this.mesh);
-
-        // Update mesh position and rotation to match the physics body
-        const ms = this.body.getMotionState();
-        if (ms) {
-            ms.getWorldTransform(g_World.transform);
-            const p = g_World.transform.getOrigin();
-            const q = g_World.transform.getRotation();
-            this.mesh.position.set(p.x(), p.y(), p.z());
-            this.mesh.quaternion.set(q.x(), q.y(), q.z(), q.w());
-        }
+        this.mesh.position.copy(this.body.position);
+        this.mesh.quaternion.copy(this.body.quaternion);
     }
 }

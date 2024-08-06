@@ -1,61 +1,49 @@
 import { PhysicsMesh } from './PhysicsMesh.js';
 
 export class World {
-    constructor() {
+    constructor(renderer) {
+        this.renderer = renderer;
+        this.world = new CANNON.World();
+        this.world.gravity.set(0, -9.82, 0);
         this.objects = [];
+        this.world.broadphase = new CANNON.NaiveBroadphase();
+        this.world.solver.iterations = 10;
 
-        this.transform = new Ammo.btTransform();
-        this.physicsWorld = new Ammo.btDiscreteDynamicsWorld();
-        this.physicsWorld.setGravity(new Ammo.btVector3(0, -9.810, 0));
-        this.physicsWorld.setGravity(new Ammo.btVector3(0, -9.810, 0));
-
-        Ammo.btGImpactCollisionAlgorithm.prototype.registerAlgorithm(this.physicsWorld.getDispatcher());
-        this.transformAux1 = new Ammo.btTransform();
-        this.clock = new THREE.Clock();
+        // Materials
+        this.defaultMaterial = new CANNON.Material('default');
+        this.groundMaterial = new CANNON.Material('groundMaterial');
+        this.contactMaterial = new CANNON.ContactMaterial(this.defaultMaterial, this.groundMaterial, {
+            friction: 0,
+            restitution: 0,
+        });
+        this.world.addContactMaterial(this.contactMaterial);
     }
 
-    createRigidBody(object, physicsShape, mass, pos, quat, vel, angVel) {
-        if (pos) {
-            object.position.copy(pos);
-        } else {
-            pos = object.position;
-        }
-        if (quat) {
-            object.quaternion.copy(quat);
-        } else {
-            quat = object.quaternion;
-        }
+    addSphere(radius, position) {
+        // Cannon.js sphere
+        const sphereShape = new CANNON.Sphere(radius);
+        const sphereBody = new CANNON.Body({
+            mass: 1,
+            position: new CANNON.Vec3(position.x, position.y, position.z),
+            shape: sphereShape,
+            material: this.defaultMaterial,
+        });
 
-        const transform = new Ammo.btTransform();
-        transform.setIdentity();
-        transform.setOrigin(new Ammo.btVector3(pos.x, pos.y, pos.z));
-        transform.setRotation(new Ammo.btQuaternion(quat.x, quat.y, quat.z, quat.w));
-        const motionState = new Ammo.btDefaultMotionState(transform);
+        // Three.js sphere
+        const sphereGeometry = new THREE.SphereGeometry(radius, 32, 32);
+        const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff });
+        const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
 
-        const localInertia = new Ammo.btVector3(0, 0, 0);
-        physicsShape.calculateLocalInertia(mass, localInertia);
+        // Create PhysicsObject
+        const physicsObject = new PhysicsMesh(sphereBody, sphereMesh);
+        physicsObject.add();
+        return physicsObject;
+    }
 
-        const rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, motionState, physicsShape, localInertia);
-        const body = new Ammo.btRigidBody(rbInfo);
-
-        body.setFriction(0.5);
-
-        if (vel) {
-            body.setLinearVelocity(new Ammo.btVector3(vel.x, vel.y, vel.z));
-        }
-
-        if (angVel) {
-            body.setAngularVelocity(new Ammo.btVector3(angVel.x, angVel.y, angVel.z));
-        }
-        object.userData.physicsBody = body;
-        object.userData.collided = false;
-        if (mass > 0) {
-            this.objects.push(object);
-            body.setActivationState(4);
-        }
-        this.physicsWorld.addRigidBody(body);
-        return body;
-
+    fixToAngle(object, axis = 'y') {
+        const quaternion = new CANNON.Quaternion();
+        quaternion.setFromAxisAngle(new CANNON.Vec3(axis === 'x' ? 1 : 0, axis === 'y' ? 1 : 0, axis === 'z' ? 1 : 0), 0);
+        object.body.quaternion.copy(quaternion);
     }
 
     // Function to load a GLTF model and integrate with Cannon.js for physics
@@ -64,36 +52,43 @@ export class World {
         loader.load(path, (gltf) => {
             const model = gltf.scene;
             model.position.set(0, 0, 0); // Ensure model is positioned correctly
-
-            g_Renderer.scene.add(model);
+            this.renderer.scene.add(model);
 
             model.traverse((child) => {
                 if (child.isMesh) {
-
-                    child.castShadow = true;
-                    child.receiveShadow = true;
-                    child.material.side = THREE.FrontSide;
-
                     try {
-                        const ammoShape = this.createAmmoShape(child, child.scale);
-                        if (ammoShape) {
+                        const cannonShape = this.createCannonShape(child);
+                        if (cannonShape) {
+                            // Calculate world position of the mesh
+                            const worldPosition = new THREE.Vector3();
+                            child.getWorldPosition(worldPosition);
 
-                            let pos = child.position;
-                            let quat = child.quaternion;
+                            // Create Cannon.js body
+                            const body = new CANNON.Body({
+                                mass: 0,
+                                position: new CANNON.Vec3(worldPosition.x, worldPosition.y, worldPosition.z),
+                            });
 
-                           let body = this.createRigidBody(child, ammoShape, 0, pos, quat);
-                           body.setCollisionFlags(body.getCollisionFlags() | 1/* btCollisionObject:: CF_STATIC_OBJECT */);
+                            // Set the quaternion rotation for the Cannon.js body
+                            const quaternion = new CANNON.Quaternion();
+                            body.quaternion.copy(quaternion);
 
-                            // Store reference to the mesh and Ammo.js body for later use
-                            this.objects.push({
+                            body.addShape(cannonShape);
+                            this.world.addBody(body);
+
+                            // Create wireframe and add to the scene
+
+
+                            // Store reference to the mesh and Cannon.js body for later use
+                            this.renderer.objects.push({
                                 mesh: child,
                                 body: body,
                             });
                         } else {
-                            console.warn('Unable to create Ammo.js shape for mesh:', child);
+                            console.warn('Unable to create Cannon.js shape for mesh:', child);
                         }
                     } catch (error) {
-                        console.error('Error creating Ammo.js shape:', error);
+                        console.error('Error creating Cannon.js shape:', error);
                     }
                 }
             });
@@ -102,108 +97,150 @@ export class World {
         });
     }
 
-    // Function to create an Ammo.js shape from a Three.js mesh
-    createAmmoShape(mesh, scale = { x: 1, y: 1, z: 1 }) {
-        // Ensure the mesh is a Mesh object
-        if (!mesh.isMesh) {
-            console.error("Cannot create mesh shape for non-Mesh object.");
+
+
+
+// Function to create a Cannon.js shape from a Three.js mesh
+    createCannonShape(threeMesh) {
+        if (!threeMesh.geometry || !threeMesh.geometry.isBufferGeometry) {
+            console.error('Invalid or undefined BufferGeometry:', threeMesh.geometry);
             return null;
         }
 
-        // Extract mesh data
-        const index = mesh.geometry.index !== null ? mesh.geometry.index : undefined;
-        const attributes = mesh.geometry.attributes;
-        const meshScale = mesh.scale;
+        const geom = threeMesh.geometry;
 
-        if (attributes.position === undefined) {
-            console.error('Position attribute required for conversion.');
-            return null;
-        }
+        // Ensure geometry has indices
+        if (!geom.index) {
+            console.warn('Geometry does not have indices. Computing faces assuming triangle strips or other primitive types.');
+            const position = geom.attributes.position;
+            const indices = [];
 
-        const position = attributes.position;
-        const vertices = [];
-        const faces = [];
-
-        for (let i = 0; i < position.count; i++) {
-            vertices.push({
-                x: meshScale.x * position.getX(i),
-                y: meshScale.y * position.getY(i),
-                z: meshScale.z * position.getZ(i)
-            });
-        }
-
-        if (index !== undefined) {
-            for (let i = 0; i < index.count; i += 3) {
-                faces.push({
-                    a: index.getX(i),
-                    b: index.getX(i + 1),
-                    c: index.getX(i + 2)
-                });
+            // Create indices assuming triangle strips or other primitive types
+            for (let i = 0; i < position.count; i++) {
+                indices.push(i);
             }
-        } else {
-            for (let i = 0; i < position.count; i += 3) {
-                faces.push({
-                    a: i,
-                    b: i + 1,
-                    c: i + 2
-                });
-            }
+
+            geom.setIndex(indices);
         }
 
-        // Check if there are vertices to define the mesh shape
-        if (vertices.length === 0) {
-            console.error("No vertices to define mesh shape with.");
+        // Compute bounding box if not available
+        if (!geom.boundingBox) {
+            geom.computeBoundingBox();
+        }
+
+        const boundingBox = geom.boundingBox;
+        if (!boundingBox) {
+            console.warn('Bounding box not properly defined for geometry:', geom);
             return null;
         }
 
-        // Create Ammo.js triangle mesh
-        const ammoMesh = new Ammo.btTriangleMesh();
-        faces.forEach(face => {
-            ammoMesh.addTriangle(
-                new Ammo.btVector3(vertices[face.a].x, vertices[face.a].y, vertices[face.a].z),
-                new Ammo.btVector3(vertices[face.b].x, vertices[face.b].y, vertices[face.b].z),
-                new Ammo.btVector3(vertices[face.c].x, vertices[face.c].y, vertices[face.c].z),
-                false
-            );
-        });
+        const min = boundingBox.min;
+        const max = boundingBox.max;
 
-        // Create GImpact mesh shape
-        const gImpactShape = new Ammo.btGImpactMeshShape(ammoMesh);
-        gImpactShape.setMargin(0.01);
-        gImpactShape.setLocalScaling(new Ammo.btVector3(scale.x, scale.y, scale.z));
-        gImpactShape.updateBound();
+        // Ensure bounding box values are defined
+        if (!min || !max) {
+            console.warn('Bounding box min or max not properly defined for geometry:', geom);
+            return null;
+        }
 
-        return gImpactShape;
+        const halfExtents = max.clone().sub(min).multiplyScalar(0.5);
+        const center = min.clone().add(halfExtents);
+
+        try {
+            const vertices = geom.attributes.position.array;
+            const indices = geom.index.array;
+
+            // Create Cannon.js Trimesh
+            const cannonShape = new CANNON.Trimesh(vertices, indices);
+
+            return cannonShape;
+
+        } catch (error) {
+            console.error('Error creating Cannon.js shape:', error);
+            return null;
+        }
     }
 
-
-
     step() {
-        // Step the physics physicsWorld
-        this.physicsWorld.stepSimulation(this.clock.getDelta(), 10);
-
-        // Update rigid bodies
-        for (let i = 0; i < this.objects.length; ++i) {
-
-            const objThree = this.objects[i];
-            const objPhys = objThree.userData.physicsBody;
-            const ms = objPhys.getMotionState();
-
-            if (ms) {
-                ms.getWorldTransform(this.transformAux1);
-                const p = this.transformAux1.getOrigin();
-                const q = this.transformAux1.getRotation();
-                objThree.position.set(p.x(), p.y(), p.z());
-                objThree.quaternion.set(q.x(), q.y(), q.z(), q.w());
-                objThree.userData.collided = false;
-            }
-
-        }
+        // Step the physics world
+        this.world.step(1 / 60);
 
         // Update Three.js objects based on physics
         this.objects.forEach(obj => {
             obj.update();
         });
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    addCapsule(radius, height, position) {
+        // Cannon.js capsule
+        const playerMaterial = new CANNON.Material('player');
+        this.contactMaterial = new CANNON.ContactMaterial(playerMaterial, this.groundMaterial, {
+            friction: 0,
+            restitution: 0,
+        });
+        const capsuleBody = new CANNON.Body({
+            mass: 1,
+            position: new CANNON.Vec3(position.x, position.y, position.z),
+            material: playerMaterial,
+        });
+
+        const sphereShape = new CANNON.Sphere(radius);
+        const cylinderShape = new CANNON.Cylinder(radius, radius, height, 8);
+
+        capsuleBody.addShape(sphereShape, new CANNON.Vec3(0, height / 2, 0));
+        capsuleBody.addShape(sphereShape, new CANNON.Vec3(0, -height / 2, 0));
+        capsuleBody.addShape(cylinderShape, new CANNON.Vec3(0, 0, 0), new CANNON.Quaternion().setFromAxisAngle(new CANNON.Vec3(1, 0, 0), Math.PI / 2));
+
+        // Three.js capsule
+        const capsuleGeometry = new THREE.CylinderGeometry(radius, radius, height, 8);
+        const capsuleMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        const capsuleMesh = new THREE.Mesh(capsuleGeometry, capsuleMaterial);
+
+        // Create top sphere mesh
+        const topSphereGeometry = new THREE.SphereGeometry(radius, 32, 32);
+        const topSphereMesh = new THREE.Mesh(topSphereGeometry, capsuleMaterial);
+        topSphereMesh.position.y = height / 2;
+
+        // Create bottom sphere mesh
+        const bottomSphereGeometry = new THREE.SphereGeometry(radius, 32, 32);
+        const bottomSphereMesh = new THREE.Mesh(bottomSphereGeometry, capsuleMaterial);
+        bottomSphereMesh.position.y = -height / 2;
+
+        // Combine meshes
+        const capsuleGroup = new THREE.Group();
+        capsuleGroup.add(capsuleMesh);
+        capsuleGroup.add(topSphereMesh);
+        capsuleGroup.add(bottomSphereMesh);
+
+        // Create PhysicsObject
+        const physicsObject = new PhysicsMesh(capsuleBody, capsuleGroup);
+        physicsObject.add();
+        return physicsObject;
     }
 }
 
