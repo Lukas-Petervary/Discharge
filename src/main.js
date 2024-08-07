@@ -7,43 +7,59 @@ import { Player } from "./client/Player.js";
 import { MenuRegistry } from "./overlay/MenuRegistry.js";
 import {AudioManager} from "./client/audio/AudioManager.js";
 
-window.g_AudioManager = new AudioManager();
-g_AudioManager.init();
+async function main() {
+    await init();
+    g_DebugTerminal.log('Finished initializing');
 
-window.g_MenuRegistry = new MenuRegistry();
-g_MenuRegistry.showMenu('pause-menu');
+    onStart();
+    animate();
+}
 
-window.g_cursor = new CustomCursor();
-window.g_DebugTerminal = new Terminal();
+async function init() {
+    window.g_AudioManager = new AudioManager();
+    g_AudioManager.init();
 
-window.g_renderer = new Renderer();
-g_renderer.camera.position.set(0, 1.5, 2);
+    window.g_MenuRegistry = new MenuRegistry();
 
-window.g_world = new World();
-g_world.addSphere(1, { x: 0, y: 5, z: 0 });
+    window.g_cursor = new CustomCursor();
+    window.g_DebugTerminal = new Terminal();
 
-window.g_MainPlayer = new Player();
+    window.g_renderer = new Renderer();
+    g_renderer.camera.position.set(0, 1.5, 2);
 
-g_DebugTerminal.log('Finished initializing');
+    window.g_world = new World();
 
-window.g_ConnectionManager = new ConnectionManager();
-g_ConnectionManager.initialize();
+    window.g_MainPlayer = new Player();
 
-const ambientLight = new THREE.AmbientLight(0xffffff, 1);
-g_renderer.scene.add(ambientLight);
+    window.g_ConnectionManager = new ConnectionManager();
+    g_ConnectionManager.initialize();
 
-g_DebugTerminal.log('Finished instantiating connection');
-g_world.loadGLTFModel('../../assets/terrain/maps/portbase/scene.gltf');
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1);
+    g_renderer.scene.add(ambientLight);
+
+    g_DebugTerminal.log('Finished instantiating connection');
+    g_world.loadGLTFModel('../../assets/terrain/maps/portbase/scene.gltf');
+}
+
+function onStart() {
+    g_MenuRegistry.showMenu('pause-menu');
+    g_world.addSphere(1, { x: 0, y: 5, z: 0 });
+}
+
+function tick() {
+    g_AudioManager.pushPlayerPosition();
+
+    if(g_cursor.isLocked)
+        g_MainPlayer.movement();
+
+    g_cursor.delta = {dx: 0, dy: 0};
+    g_world.step();
+}
 
 function animate() {
     requestAnimationFrame(animate);
-    g_AudioManager.pushPlayerPosition();
-
-    if(window.g_cursor.isLocked)
-        window.g_MainPlayer.movement();
-    else
-        window.g_world.fixToAngle(window.g_MainPlayer.playerBody, 0);
-    g_world.step();
+    tick();
     g_renderer.render();
 }
-animate();
+
+main();

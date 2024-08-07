@@ -52,7 +52,6 @@ export class Player {
             contact.bi.id === this.playerBody.body.id ? contact.ni.negate(contactNormal) : contactNormal.copy(contact.ni);
 
             this.canJump = contactNormal.dot(upAxis) > 0.5;
-            g_DebugTerminal.log(`canJump: ${g_MainPlayer.canJump}`);
         });
 
         document.addEventListener('keydown', this.onKeyDown.bind(this), false);
@@ -159,11 +158,9 @@ export class Player {
     updateCameraRotation() {
         // clamp camera pitch
         const min = -Math.PI/2.2, max = Math.PI/2.2;
-        this.pitch = this.sensitivity * (1 - g_cursor.position.y/window.innerHeight*2);
+        this.pitch -= g_cursor.delta.dy / window.innerHeight * this.sensitivity;
         this.pitch = this.pitch < min ? min : this.pitch > max ? max : this.pitch;
-        g_cursor.position.y = (1 - this.pitch/this.sensitivity) * window.innerHeight / 2;
-
-        this.yaw = this.sensitivity * (1 - g_cursor.position.x/window.innerWidth*2);
+        this.yaw -= g_cursor.delta.dx / window.innerWidth * this.sensitivity;
 
         // apply pitch and yaw to camera
         const lookVec = new CANNON.Quaternion();
@@ -194,7 +191,8 @@ export class Player {
     }
 
     movement() {
-        this.updateCameraRotation();
+        if (g_cursor.isLocked)
+            this.updateCameraRotation();
         if (this.firstPerson)
             g_renderer.camera.position.copy(this.playerBody.mesh.position);
         else

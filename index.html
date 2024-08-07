@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Discharge</title>
+
+        <link rel="stylesheet" href="styles.css">
+
+
+        <script src="https://cdn.jsdelivr.net/npm/peerjs@1.3.2/dist/peerjs.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r126/three.min.js"
+                integrity="sha512-n8IpKWzDnBOcBhRlHirMZOUvEq2bLRMuJGjuVqbzUJwtTsgwOgK5aS0c1JA647XWYfqvXve8k3PtZdzpipFjgg=="
+                crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"
+                integrity="sha512-avLcnGxl5mqAX/wIKERdb1gFNkOLHh2W5JNCfJm5OugpEPBz7LNXJJ3BDjjwO00AxEY1MqdNjtEmiYhKC0ld7g=="
+                crossorigin="anonymous"></script>
+        <script src="https://unpkg.com/three@0.126.0/examples/js/loaders/GLTFLoader.js"
+                integrity="sha384-AEb/BX3YlmtV0ojuXiEU8C/HnQ+ftI0J40CIuE08tbhZnuvRXOTznQ8S2TBEa6fh"
+                crossorigin="anonymous"></script>
+    </head>
+    <body>
+        <div id="custom-cursor"></div>
+
+        <div id="terminal-container">
+            <div class="terminal">
+                <div class="terminal-header">Terminal</div>
+                <div class="terminal-output"></div>
+                <div class="terminal-input">
+                    <span class="prompt">$ </span>
+                    <input type="text" id="terminal-input">
+                </div>
+            </div>
+        </div>
+
+        <div id="pause-menu" class="overlay">
+            <div class="pause-content">
+                <button id="exit-button" onclick="g_MenuRegistry.showMenu('start-menu')">Exit to Menu</button>
+                <button id="back-button" onclick="g_cursor.lock()">Back to Game</button>
+            </div>
+        </div>
+
+        <div id="start-menu" class="overlay"></div>
+
+        <script type="module" src="./src/main.js"></script>
+    </body>
+</html>
