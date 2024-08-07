@@ -38,7 +38,7 @@ async function init() {
     g_renderer.scene.add(ambientLight);
 
     g_DebugTerminal.log('Finished instantiating connection');
-    g_world.loadGLTFModel('../../assets/terrain/maps/portbase/scene.gltf');
+    g_world.loadGLTFModel('assets/terrain/maps/portbase/scene.gltf');
 }
 
 function onStart() {

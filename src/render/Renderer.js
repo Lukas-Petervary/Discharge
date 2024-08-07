@@ -31,7 +31,7 @@ export class Renderer {
         const skyGeometry = new THREE.SphereGeometry(1000, 25, 25);
 
         // Load the texture
-        const texture = new THREE.TextureLoader().load('../../assets/terrain/Skyboxes/' + name);
+        const texture = new THREE.TextureLoader().load('assets/terrain/Skyboxes/' + name);
 
         // Create a Phong material for the skybox with the loaded texture
         const skyMaterial = new THREE.MeshPhongMaterial({
