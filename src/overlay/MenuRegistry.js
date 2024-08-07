@@ -62,9 +62,9 @@ export class MenuRegistry {
 
     updateCursorVisibility() {
         if (this.isMenuOpen) {
-            document.body.style.cursor = 'default'; // Show the client cursor
+            document.body.style.cursor = 'default'; // Show the client g_cursor
         } else {
-            document.body.style.cursor = 'none'; // Hide the client cursor
+            document.body.style.cursor = 'none'; // Hide the client g_cursor
         }
     }
 }

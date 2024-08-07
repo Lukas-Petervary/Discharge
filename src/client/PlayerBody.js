@@ -6,8 +6,8 @@ const crouchHeight = 1;
 export class PlayerBody {
     constructor() {
         this.playerMaterial = new CANNON.Material('player');
-        world.world.addContactMaterial(
-            new CANNON.ContactMaterial(this.playerMaterial, world.groundMaterial, {
+        g_world.world.addContactMaterial(
+            new CANNON.ContactMaterial(this.playerMaterial, g_world.groundMaterial, {
                 friction: 0,
                 restitution: 0
             })
@@ -60,8 +60,8 @@ export class PlayerBody {
                 contact.bi.id === body.id ? contact.ni.negate(contactNormal) : contactNormal.copy(contact.ni);
 
                 if(contactNormal.dot(upAxis) > 0.5)
-                    mainPlayer.canJump = contactNormal.dot(upAxis) > 0.5;
-                debugTerminal.log(`canJump: ${mainPlayer.canJump}`);
+                    g_MainPlayer.canJump = contactNormal.dot(upAxis) > 0.5;
+                g_DebugTerminal.log(`canJump: ${g_MainPlayer.canJump}`);
             });
         };
         const forceUpright = (body, mesh) => {
@@ -83,11 +83,11 @@ export class PlayerBody {
     static addCapsule(radius, height, position) {
         // Cannon.js capsule
         const playerMaterial = new CANNON.Material('player');
-        this.contactMaterial = new CANNON.ContactMaterial(playerMaterial, world.groundMaterial, {
+        this.contactMaterial = new CANNON.ContactMaterial(playerMaterial, g_world.groundMaterial, {
             friction: 0,
             restitution: 0
         });
-        world.world.addContactMaterial(this.contactMaterial);
+        g_world.world.addContactMaterial(this.contactMaterial);
 
         const capsuleBody = new CANNON.Body({
             mass: 1,

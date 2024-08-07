@@ -54,7 +54,7 @@ export class Terminal {
         const [file, line] = stack.match(/(?:\/|\\)([^\/\\]+):(\d+):\d+/).slice(1, 3);
         const logMessage = `${file}:${line} > ${message}`;
 
-        debugTerminal ? debugTerminal.outputLog(logMessage) : console.log(logMessage);
+        g_DebugTerminal ? g_DebugTerminal.outputLog(logMessage) : console.log(logMessage);
     }
 
     initDrag() {
@@ -99,8 +99,8 @@ export class Terminal {
 
     openTerminal() {
         this.isOpen = true;
-        this.prevCursorLocked = window.cursor.isLocked;
-        window.cursor.unlock();
+        this.prevCursorLocked = window.g_cursor.isLocked;
+        window.g_cursor.unlock();
         this.terminal.style.display = 'flex';
         this.input.focus();
     }
@@ -108,7 +108,7 @@ export class Terminal {
     closeTerminal() {
         this.isOpen = false;
         if (this.prevCursorLocked)
-            window.cursor.lock();
+            window.g_cursor.lock();
         this.terminal.style.display = 'none';
     }
 }

@@ -9,37 +9,35 @@ import { MenuRegistry } from "./overlay/MenuRegistry.js";
 window.g_MenuRegistry = new MenuRegistry();
 g_MenuRegistry.showMenu('pause-menu');
 
-window.cursor = new CustomCursor();
-window.debugTerminal = new Terminal();
+window.g_cursor = new CustomCursor();
+window.g_DebugTerminal = new Terminal();
 
-window.renderer = new Renderer();
-renderer.camera.position.set(0, 1.5, 2);
+window.g_renderer = new Renderer();
+g_renderer.camera.position.set(0, 1.5, 2);
 
-window.world = new World(renderer);
-world.addSphere(1, { x: 0, y: 5, z: 0 });
+window.g_world = new World(g_renderer);
+g_world.addSphere(1, { x: 0, y: 5, z: 0 });
 
-window.mainPlayer = new Player();
+window.g_MainPlayer = new Player();
 
-debugTerminal.log('Finished initializing');
+g_DebugTerminal.log('Finished initializing');
 
-window.connectionManager = new ConnectionManager();
-connectionManager.initialize();
+window.g_ConnectionManager = new ConnectionManager();
+g_ConnectionManager.initialize();
 
 const ambientLight = new THREE.AmbientLight(0xffffff, 1);
-world.renderer.scene.add(ambientLight);
+g_world.renderer.scene.add(ambientLight);
 
-
-
-debugTerminal.log('Finished instantiating connection');
-world.loadGLTFModel('../../assets/terrain/maps/portbase/scene.gltf');
+g_DebugTerminal.log('Finished instantiating connection');
+g_world.loadGLTFModel('../../assets/terrain/maps/portbase/scene.gltf');
 
 function animate() {
     requestAnimationFrame(animate);
-    if(window.cursor.isLocked)
-        window.mainPlayer.movement();
+    if(window.g_cursor.isLocked)
+        window.g_MainPlayer.movement();
     else
-        window.world.fixToAngle(window.mainPlayer.playerBody, 0);
-    world.step();
-    renderer.render();
+        window.g_world.fixToAngle(window.g_MainPlayer.playerBody, 0);
+    g_world.step();
+    g_renderer.render();
 }
 animate();

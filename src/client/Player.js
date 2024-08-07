@@ -6,7 +6,7 @@ const jumpSpeed = 10;
 export class Player {
     constructor() {
         // Player Body Mesh
-        this.playerBody = world.addSphere(2, {x: 0, y: 0, z:0});
+        this.playerBody = g_world.addSphere(2, {x: 0, y: 0, z:0});
         this.sensitivity = 3;
 
         // Player look direction
@@ -46,7 +46,7 @@ export class Player {
             contact.bi.id === this.playerBody.body.id ? contact.ni.negate(contactNormal) : contactNormal.copy(contact.ni);
 
             this.canJump = contactNormal.dot(upAxis) > 0.5;
-            debugTerminal.log(`canJump: ${mainPlayer.canJump}`);
+            g_DebugTerminal.log(`canJump: ${g_MainPlayer.canJump}`);
         });
 
         document.addEventListener('keydown', this.onKeyDown.bind(this), false);
@@ -148,18 +148,18 @@ export class Player {
     updateCameraRotation() {
         // clamp camera pitch
         const min = -Math.PI/2.2, max = Math.PI/2.2;
-        this.pitch = this.sensitivity * (1 - cursor.position.y/window.innerHeight*2);
+        this.pitch = this.sensitivity * (1 - g_cursor.position.y/window.innerHeight*2);
         this.pitch = this.pitch < min ? min : this.pitch > max ? max : this.pitch;
-        cursor.position.y = (1 - this.pitch/this.sensitivity) * window.innerHeight / 2;
+        g_cursor.position.y = (1 - this.pitch/this.sensitivity) * window.innerHeight / 2;
 
-        this.yaw = this.sensitivity * (1 - cursor.position.x/window.innerWidth*2);
+        this.yaw = this.sensitivity * (1 - g_cursor.position.x/window.innerWidth*2);
 
         // apply pitch and yaw to camera
         const lookVec = new CANNON.Quaternion();
         lookVec.setFromEuler(0, this.yaw, 0, 'YXZ');
         this.playerBody.body.quaternion.copy(lookVec);
         lookVec.setFromEuler(this.pitch, this.yaw, 0, 'YXZ');
-        renderer.camera.quaternion.copy(lookVec);
+        g_renderer.camera.quaternion.copy(lookVec);
     }
 
     updateCameraFrustum(camOffset) {
@@ -175,17 +175,17 @@ export class Player {
         ray._updateDirection();
         const result = new CANNON.RaycastResult();
 
-        const collision = ray.intersectBodies(world.world.bodies, result);
+        const collision = ray.intersectBodies(g_world.world.bodies, result);
         const finalPos = collision ? result.hitPointWorld : desiredCamPos;
 
-        renderer.camera.position.copy(finalPos);
-        renderer.camera.lookAt(this.playerBody.mesh.position);
+        g_renderer.camera.position.copy(finalPos);
+        g_renderer.camera.lookAt(this.playerBody.mesh.position);
     }
 
     movement() {
         this.updateCameraRotation();
         if (this.firstPerson)
-            renderer.camera.position.copy(this.playerBody.mesh.position);
+            g_renderer.camera.position.copy(this.playerBody.mesh.position);
         else
             this.updateCameraFrustum(new THREE.Vector3(0,0,5));
 

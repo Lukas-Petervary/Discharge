@@ -59,7 +59,7 @@ export class World {
                     try {
                         const cannonShape = this.createCannonShape(child);
                         if (cannonShape) {
-                            // Calculate world position of the mesh
+                            // Calculate g_world position of the mesh
                             const worldPosition = new THREE.Vector3();
                             child.getWorldPosition(worldPosition);
 
@@ -162,7 +162,7 @@ export class World {
     }
 
     step() {
-        // Step the physics world
+        // Step the physics g_world
         this.world.step(1 / 60);
 
         // Update Three.js objects based on physics

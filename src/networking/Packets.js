@@ -6,7 +6,7 @@ let handshakeList = [];
 class GenericPacket {
     constructor(type) {
         this.type = type;
-        this.peer = connectionManager.peerId;
+        this.peer = g_ConnectionManager.peerId;
     }
 }
 
@@ -25,28 +25,28 @@ class HandshakePacket extends GenericPacket {
     }
 
     static handleHandshake(packet, fromPeerId) {
-        debugTerminal.log(`Handshake inbound from "${fromPeerId}":\n${JSON.stringify(packet)}`);
+        g_DebugTerminal.log(`Handshake inbound from "${fromPeerId}":\n${JSON.stringify(packet)}`);
 
         const sender = packet.peerId;
         if (!handshakeList.includes(sender)) {
             handshakeList.push(sender);
 
             // if not already connected, establish connection
-            if (!connectionManager.connections.has(sender)) {
-                debugTerminal.log(`Connecting from handshake "${fromPeerId}"`);
-                connectionManager.connectToPeer(sender);
+            if (!g_ConnectionManager.connections.has(sender)) {
+                g_DebugTerminal.log(`Connecting from handshake "${fromPeerId}"`);
+                g_ConnectionManager.connectToPeer(sender);
             }
             else { // if connected, reciprocate handshake
-                debugTerminal.log(`Already connected to "${fromPeerId}", returning handshake`);
-                connectionManager.sendHandshake(connectionManager.connections.get(sender));
+                g_DebugTerminal.log(`Already connected to "${fromPeerId}", returning handshake`);
+                g_ConnectionManager.sendHandshake(g_ConnectionManager.connections.get(sender));
             }
-            debugTerminal.log(`Current handshakes: [${handshakeList}]\nBroadcast: ${fromPeerId === sender}`);
+            g_DebugTerminal.log(`Current handshakes: [${handshakeList}]\nBroadcast: ${fromPeerId === sender}`);
 
             // only propagate handshake if from initial sender
             if (fromPeerId === sender) {
                 const jsonPacket = JSON.stringify(packet);
                 this.connections.forEach(conn => {
-                    debugTerminal.log(`Broadcasting ? [${conn.peer !== sender}]: handshake to "${conn.peer}":\n${jsonPacket}`);
+                    g_DebugTerminal.log(`Broadcasting ? [${conn.peer !== sender}]: handshake to "${conn.peer}":\n${jsonPacket}`);
                     // if connection is open and not returning to sender
                     if (conn.open && conn.peer !== sender) {
                         conn.send(jsonPacket);

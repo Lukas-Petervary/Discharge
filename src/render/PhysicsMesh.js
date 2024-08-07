@@ -9,9 +9,9 @@ export class PhysicsMesh {
     add() {
         if (this.addCallback)
             this.addCallback(this.body, this.mesh);
-        world.world.addBody(this.body);
-        renderer.scene.add(this.mesh);
-        world.objects.push(this);
+        g_world.world.addBody(this.body);
+        g_renderer.scene.add(this.mesh);
+        g_world.objects.push(this);
     }
 
     update() {
