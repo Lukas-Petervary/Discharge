@@ -1,10 +1,13 @@
 import ConnectionManager from './networking/ConnectionManager.js';
-import { Terminal } from "./terminal/Terminal.js";
-import { CustomCursor } from "./terminal/Cursor.js";
+import { Terminal } from "./overlay/Terminal.js";
+import { CustomCursor } from "./overlay/Cursor.js";
 import { Renderer } from "./render/Renderer.js";
 import { World } from "./render/World.js";
 import { Player } from "./client/Player.js";
+import { MenuRegistry } from "./overlay/MenuRegistry.js";
 
+window.g_MenuRegistry = new MenuRegistry();
+g_MenuRegistry.showMenu('pause-menu');
 
 window.cursor = new CustomCursor();
 window.debugTerminal = new Terminal();

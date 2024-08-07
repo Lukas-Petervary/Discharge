@@ -4,11 +4,6 @@
     box-sizing: border-box;
 }
 
-html, body {
-    height: 100%;
-    font-family: Arial, sans-serif;
-    cursor: none;
-}
 
 .terminal {
     position: absolute;
@@ -77,4 +72,50 @@ html, body {
     pointer-events: none;
     transition: transform 0.01s;
     z-index: 1000;
+}
+
+.overlay {
+    display: none; /* Hidden by default */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.pause-content {
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+button {
+    display: block;
+    margin: 10px auto;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border: none;
+    border-radius: 5px;
+    background-color: #007BFF;
+    color: white;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+.custom-cursor {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: red;
+    position: absolute;
+    pointer-events: none;
+    z-index: 1001;
 }

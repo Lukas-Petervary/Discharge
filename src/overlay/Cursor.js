@@ -1,15 +1,17 @@
 export class CustomCursor {
-    constructor() {
+    constructor(menuRegistry) {
         this.cursorElement = document.getElementById('custom-cursor');
-        this.isLocked = false;
+        this.menuRegistry = menuRegistry;
         this.position = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
         this.delta = { dx: 0, dy: 0 };
 
+        this.isLocked = false;
         this.init();
     }
 
     init() {
         document.addEventListener('mousemove', (e) => this.onMouseMove(e));
+        document.addEventListener('pointerlockchange', () => this.onPointerLockChange());
         this.cursorElement.style.transform = `translate(${this.position.x}px, ${this.position.y}px)`;
     }
 
@@ -27,22 +29,26 @@ export class CustomCursor {
         this.cursorElement.style.transform = `translate(${this.position.x}px, ${this.position.y}px)`;
     }
 
-    toggleLock() {
-        this.isLocked = !this.isLocked;
-        this.isLocked ? this.lock() : this.unlock();
-        window.debugTerminal.log(`Cursor ${this.isLocked ? 'locked' : 'unlocked'}`)
+    onPointerLockChange() {
+        if (document.pointerLockElement === document.documentElement) {
+            this.isLocked = true;
+            this.cursorElement.style.backgroundColor = 'blue';
+            g_MenuRegistry.hideAllMenus();
+        } else {
+            this.isLocked = false;
+            this.cursorElement.style.backgroundColor = 'red';
+            if (!g_MenuRegistry.isMenuOpen) {
+                g_MenuRegistry.toggleMenu('pause-menu');
+            }
+        }
     }
 
     lock() {
-        this.isLocked = true;
-        this.cursorElement.style.backgroundColor = 'blue';
         document.documentElement.requestPointerLock = document.documentElement.requestPointerLock || document.documentElement.mozRequestPointerLock || document.documentElement.webkitRequestPointerLock;
         document.documentElement.requestPointerLock();
     }
 
     unlock() {
-        this.isLocked = false;
-        this.cursorElement.style.backgroundColor = 'red';
         document.exitPointerLock = document.exitPointerLock || document.mozExitPointerLock || document.webkitExitPointerLock;
         document.exitPointerLock();
     }
