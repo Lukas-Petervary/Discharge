@@ -1,8 +1,7 @@
 import { PhysicsMesh } from './PhysicsMesh.js';
 
 export class World {
-    constructor(renderer) {
-        this.renderer = renderer;
+    constructor() {
         this.world = new CANNON.World();
         this.world.gravity.set(0, -9.82, 0);
         this.objects = [];
@@ -52,7 +51,7 @@ export class World {
         loader.load(path, (gltf) => {
             const model = gltf.scene;
             model.position.set(0, 0, 0); // Ensure model is positioned correctly
-            this.renderer.scene.add(model);
+            g_renderer.scene.add(model);
 
             model.traverse((child) => {
                 if (child.isMesh) {
@@ -80,7 +79,7 @@ export class World {
 
 
                             // Store reference to the mesh and Cannon.js body for later use
-                            this.renderer.objects.push({
+                            g_renderer.objects.push({
                                 mesh: child,
                                 body: body,
                             });

@@ -3,6 +3,12 @@ const maxSprintSpeed = 10;
 const acceleration = 2;
 const jumpSpeed = 10;
 
+let playSound = false;
+
+setInterval(() => {
+    if (playSound) g_AudioManager.playSound('walk', {volume: 0.25, playbackRate: 2, detune: -1200});
+}, 250)
+
 export class Player {
     constructor() {
         // Player Body Mesh
@@ -112,7 +118,7 @@ export class Player {
         if (this.isJumping && this.canJump) {
             const jumpImpulse = new CANNON.Vec3(0, jumpSpeed, 0);
             this.playerBody.body.applyImpulse(jumpImpulse, this.playerBody.body.position);
-
+            g_AudioManager.playSound('jump', {volume: 2});
             this.canJump = false;
         }
     }
@@ -131,7 +137,12 @@ export class Player {
 
         moveDirection.z = this.moveForward ? -1 : this.moveBackward ? 1 : 0;
         moveDirection.x = this.moveLeft ? -1 : this.moveRight ? 1 : 0;
-        if (moveDirection.length() > 0) moveDirection.normalize();
+        if (moveDirection.length() > 0) {
+            moveDirection.normalize();
+            playSound = true;
+        } else {
+            playSound = false;
+        }
 
         const rotatedMovement = this.playerBody.body.quaternion.vmult(moveDirection);
 
