@@ -51,7 +51,7 @@ export class Player {
 
             contact.bi.id === this.playerBody.body.id ? contact.ni.negate(contactNormal) : contactNormal.copy(contact.ni);
 
-            this.canJump = contactNormal.dot(upAxis) > 0.5;
+            this.canJump |= contactNormal.dot(upAxis) > 0.5;
         });
 
         document.addEventListener('keydown', this.onKeyDown.bind(this), false);
