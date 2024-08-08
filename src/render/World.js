@@ -194,7 +194,6 @@ export class World {
 
 
 
-
     addCapsule(radius, height, position) {
         // Cannon.js capsule
         const playerMaterial = new CANNON.Material('player');

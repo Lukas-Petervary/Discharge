@@ -68,7 +68,6 @@ function animate() {
     g_MainPlayer.moveCamera();
     g_renderer.render();
     g_KeybindManager.update();
-
     frameCount++;
     requestAnimationFrame(animate);
 }

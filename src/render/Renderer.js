@@ -6,6 +6,7 @@ export class Renderer {
         this.sceneRenderer = new THREE.WebGLRenderer({ antialias: true });
 
         this.objects = [];
+        this.skybox = null;
 
         this.init();
     };
@@ -29,7 +30,8 @@ export class Renderer {
     skyBox(name){
         //makes the sky Sphere
         const skyGeometry = new THREE.SphereGeometry(1000, 25, 25);
-
+        skyGeometry.scale(-1,1,1);
+        
         // Load the texture
         const texture = new THREE.TextureLoader().load('assets/terrain/Skyboxes/' + name);
 
@@ -39,13 +41,20 @@ export class Renderer {
         });
 
         // Create the skybox mesh
-        const skybox = new THREE.Mesh(skyGeometry, skyMaterial);
+        this.skybox = new THREE.Mesh(skyGeometry, skyMaterial);
 
         // Ensure the skybox is rendered on the inside of the sphere
-        skybox.material.side = THREE.BackSide;
+      
+        this.scene.add(this.skybox);
     }
 
+    updateSkyboxPosition() {
+      if(this.skybox)
+        this.skybox.position.copy(this.camera.position);
+    }
+  
     render() {
+        this.updateSkyboxPosition();
         this.sceneRenderer.render(this.scene, this.camera);
     }
 }
