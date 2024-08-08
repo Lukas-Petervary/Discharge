@@ -1,4 +1,4 @@
-import {PhysicsMesh} from "../render/PhysicsMesh.js";
+import {PhysicsMesh} from "../../render/PhysicsMesh.js";
 
 const height = 2;
 const crouchHeight = 1;

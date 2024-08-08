@@ -1,6 +1,6 @@
 const maxWalkSpeed = 5;
 const maxSprintSpeed = 10;
-const acceleration = 2;
+const acceleration = 8;
 const jumpSpeed = 10;
 
 let playSound = false;
@@ -21,13 +21,6 @@ export class Player {
 
         // Movement variables
         this.firstPerson = true;
-        this.moveForward = false;
-        this.moveBackward = false;
-        this.moveLeft = false;
-        this.moveRight = false;
-        this.isJumping = false;
-        this.isCrouching = false;
-        this.isSprinting = false;
         this.canJump = true;
 
         this.init();
@@ -54,69 +47,12 @@ export class Player {
             this.canJump |= contactNormal.dot(upAxis) > 0.5;
         });
 
-        document.addEventListener('keydown', this.onKeyDown.bind(this), false);
-        document.addEventListener('keyup', this.onKeyUp.bind(this), false);
-    }
-
-    onKeyDown(event) {
-        switch (event.keyCode) {
-            case 87: // W
-                this.moveForward = true;
-                break;
-            case 83: // S
-                this.moveBackward = true;
-                break;
-            case 65: // A
-                this.moveLeft = true;
-                break;
-            case 68: // D
-                this.moveRight = true;
-                break;
-            case 32: // Spacebar (jump)
-                if (this.canJump)
-                    this.isJumping = true;
-                break;
-            case 16: // Shift (sprint)
-                this.isSprinting = true;
-                break;
-            case 67: // C (crouch)
-                this.isCrouching = true;
-                break;
-            case 115: // F4 (third person)
-                this.firstPerson = !this.firstPerson;
-        }
-    }
-
-    onKeyUp(event) {
-        switch (event.keyCode) {
-            case 87: // W
-                this.moveForward = false;
-                break;
-            case 83: // S
-                this.moveBackward = false;
-                break;
-            case 65: // A
-                this.moveLeft = false;
-                break;
-            case 68: // D
-                this.moveRight = false;
-                break;
-            case 32: // Spacebar (jump)
-                this.isJumping = false;
-                break;
-            case 16: // Shift (sprint)
-                this.isSprinting = false;
-                break;
-            case 67: // C (crouch)
-                this.isCrouching = false;
-                break;
-        }
+        g_Controls.thirdPerson.onPress(() => {this.firstPerson = !this.firstPerson;});
     }
 
     handleJump() {
-        if (this.isJumping && this.canJump) {
-            const jumpImpulse = new CANNON.Vec3(0, jumpSpeed, 0);
-            this.playerBody.body.applyImpulse(jumpImpulse, this.playerBody.body.position);
+        if (g_Controls.jump.isPressed && this.canJump) {
+            this.playerBody.body.velocity.y = jumpSpeed;
             g_AudioManager.playSound('jump', {volume: 2});
             this.canJump = false;
         }
@@ -134,25 +70,22 @@ export class Player {
     handlePlayerMovement() {
         const moveDirection = new CANNON.Vec3(0, 0, 0);
 
-        moveDirection.z = this.moveForward ? -1 : this.moveBackward ? 1 : 0;
-        moveDirection.x = this.moveLeft ? -1 : this.moveRight ? 1 : 0;
-        if (moveDirection.length() > 0) {
+        moveDirection.z = g_Controls.moveForward.isPressed ? -1 : g_Controls.moveBackward.isPressed ? 1 : 0;
+        moveDirection.x = g_Controls.moveLeft.isPressed ? -1 : g_Controls.moveRight.isPressed ? 1 : 0;
+        if (playSound = (moveDirection.length() > 0)) {
             moveDirection.normalize();
-            playSound = true;
-        } else {
-            playSound = false;
         }
 
         const rotatedMovement = this.playerBody.body.quaternion.vmult(moveDirection);
 
-        const speed = this.isSprinting ? maxSprintSpeed : maxWalkSpeed;
+        const speed = g_Controls.sprint.isPressed ? maxSprintSpeed : maxWalkSpeed;
         const desiredVelocity = rotatedMovement.scale(speed);
 
         const dV = desiredVelocity.vsub(this.playerBody.body.velocity);
         const force = dV.scale(this.playerBody.body.mass * acceleration);
-        force.y = 0.1;
+        force.y = 0;
 
-        this.playerBody.body.applyForce(force, this.playerBody.body.position.vadd(new CANNON.Vec3(0,0.1,0)));
+        this.playerBody.body.applyForce(force, this.playerBody.body.position);
     }
 
     updateCameraRotation() {
@@ -170,7 +103,7 @@ export class Player {
         g_renderer.camera.quaternion.copy(lookVec);
     }
 
-    updateCameraFrustum(camOffset) {
+    updateCameraOffset(camOffset) {
         const pitchQuaternion = new THREE.Quaternion();
         pitchQuaternion.setFromAxisAngle(new THREE.Vector3(1, 0, 0), this.pitch);
 
@@ -190,14 +123,16 @@ export class Player {
         g_renderer.camera.lookAt(this.playerBody.mesh.position);
     }
 
-    movement() {
+    moveCamera() {
         if (g_cursor.isLocked)
             this.updateCameraRotation();
         if (this.firstPerson)
             g_renderer.camera.position.copy(this.playerBody.mesh.position);
         else
-            this.updateCameraFrustum(new THREE.Vector3(0,0,5));
+            this.updateCameraOffset(new THREE.Vector3(0,0,5));
+    }
 
+    move() {
         this.handlePlayerMovement();
         this.handleJump();
         //this.handleCrouch();
