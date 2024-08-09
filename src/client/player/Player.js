@@ -1,3 +1,5 @@
+import { PlayerBody } from "./PlayerBody.js";
+
 const maxWalkSpeed = 5;
 const maxSprintSpeed = 10;
 const acceleration = 8;
@@ -12,7 +14,7 @@ setInterval(() => {
 export class Player {
     constructor() {
         // Player Body Mesh
-        this.playerBody = g_world.addSphere(2, {x: 0, y: 0, z:0});
+        this.playerBody = new PlayerBody()
         this.sensitivity = 3;
 
         // Player look direction
@@ -37,15 +39,6 @@ export class Player {
             body.quaternion.copy(newQuaternion);
             body.angularVelocity.set(0,0,0);
         };*/
-        const contactNormal = new CANNON.Vec3();
-        const upAxis = new CANNON.Vec3(0,1,0);
-        this.playerBody.body.addEventListener("collide", (e) => {
-            let contact = e.contact;
-
-            contact.bi.id === this.playerBody.body.id ? contact.ni.negate(contactNormal) : contactNormal.copy(contact.ni);
-
-            this.canJump |= contactNormal.dot(upAxis) > 0.5;
-        });
 
         g_Controls.thirdPerson.onPress(() => {this.firstPerson = !this.firstPerson;});
     }
