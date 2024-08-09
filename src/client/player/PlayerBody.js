@@ -61,7 +61,7 @@ export class PlayerBody {
 
                 if(contactNormal.dot(upAxis) > 0.5)
                     g_MainPlayer.canJump = contactNormal.dot(upAxis) > 0.5;
-                g_DebugTerminal.log(`canJump: ${g_MainPlayer.canJump}`);
+                console.log(`canJump: ${g_MainPlayer.canJump}`);
             });
         };
         const forceUpright = (body, mesh) => {

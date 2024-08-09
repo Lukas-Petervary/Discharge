@@ -54,7 +54,7 @@ export class Terminal {
         const [file, line] = stack.match(/(?:\/|\\)([^\/\\]+):(\d+):\d+/).slice(1, 3);
         const logMessage = `${file}:${line} > ${message}`;
 
-        g_DebugTerminal ? g_DebugTerminal.outputLog(logMessage) : console.log(logMessage);
+        console ? console.outputLog(logMessage) : console.log(logMessage);
     }
 
     initDrag() {

@@ -1,5 +1,4 @@
 import ConnectionManager from './networking/ConnectionManager.js';
-import { Terminal } from "./overlay/Terminal.js";
 import { CustomCursor } from "./overlay/Cursor.js";
 import { Renderer } from "./render/Renderer.js";
 import { World } from "./render/World.js";
@@ -7,16 +6,6 @@ import { Player } from "./client/player/Player.js";
 import { MenuRegistry } from "./overlay/MenuRegistry.js";
 import { AudioManager } from "./client/audio/AudioManager.js";
 import { Controls, KeybindManager } from "./client/controls/Keybinds.js";
-
-async function main() {
-    await init();
-    g_DebugTerminal.log('Finished initializing');
-
-    onStart();
-    animate();
-    setInterval(tick, 1000 / 60);
-    startRTS();
-}
 
 async function init() {
     window.g_AudioManager = new AudioManager();
@@ -28,8 +17,6 @@ async function init() {
     window.g_KeybindManager = new KeybindManager();
     window.g_Controls = new Controls();
 
-    window.g_DebugTerminal = new Terminal();
-
     window.g_renderer = new Renderer();
     g_renderer.camera.position.set(0, 1.5, 2);
 
@@ -40,7 +27,7 @@ async function init() {
     window.g_ConnectionManager = new ConnectionManager();
     g_ConnectionManager.initialize();
 
-    g_DebugTerminal.log('Finished instantiating connection');
+    console.log('Finished instantiating connection');
     g_world.loadGLTFModel('assets/terrain/maps/portbase/scene.gltf');
 }
 
@@ -78,7 +65,7 @@ function startRTS() {
     if (recordHeap) {
         heapLimit = performance.memory.jsHeapSizeLimit / 1024 / 1024;
     } else {
-        g_DebugTerminal.log('Memory API is not supported in this browser.');
+        console.log('Memory API is not supported in this browser.');
         heapLimit = totalSize = usedHeap = -1;
     }
 
@@ -108,4 +95,10 @@ function collectRTS() {
     frameCount = 0;
 }
 
-main();
+await init();
+console.log('Finished initializing');
+
+onStart();
+animate();
+setInterval(tick, 1000 / 60);
+startRTS();

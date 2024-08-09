@@ -36,7 +36,7 @@ export class CustomCursor {
         } else {
             this.isLocked = false;
             this.cursorElement.style.backgroundColor = 'red';
-            if (!g_MenuRegistry.isMenuOpen && !g_DebugTerminal.isOpen) {
+            if (!g_MenuRegistry.isMenuOpen && !console.isOpen) {
                 g_MenuRegistry.toggleMenu('pause-menu');
             }
         }
