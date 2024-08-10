@@ -1,6 +1,4 @@
-import { PacketManager } from './PacketManager.js';
 import { HandshakePacket, MessagePacket, AlertPacket, PositionPacket } from "./Packets.js";
-
 
 export default class ConnectionManager {
     constructor() {
@@ -28,7 +26,7 @@ export default class ConnectionManager {
         return Math.random().toString(36).substring(7);
     }
 
-    initialize() {
+    init() {
         this.peer.on('open', id => {
             console.log('My peer ID is: ' + id);
             document.getElementById('connection-id').textContent = 'Your Connection ID: ' + id;
@@ -97,4 +95,27 @@ export default class ConnectionManager {
         });
     }
 
+}
+
+export class PacketManager {
+    constructor() {
+        this.packetHandlers = new Map();
+        this.receivedPackets = 0;
+        this.sentPackets = 0;
+    }
+
+    registerPacket(type, handler) {
+        this.packetHandlers.set(type, handler);
+    }
+
+    handlePacket(data, fromPeerId, peerManager) {
+        this.receivedPackets ++;
+        const parsedData = JSON.parse(data);
+        const handler = this.packetHandlers.get(parsedData.type);
+        if (handler) {
+            handler(parsedData, fromPeerId, peerManager);
+        } else {
+            console.log(`No handler for packet type: ${parsedData.type}`);
+        }
+    }
 }

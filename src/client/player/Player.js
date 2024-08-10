@@ -40,38 +40,29 @@ export class Player {
             body.angularVelocity.set(0,0,0);
         };*/
 
-        g_Controls.thirdPerson.onPress(() => {this.firstPerson = !this.firstPerson;});
+        g_Controls.of('key.camera.third_person').onPress(() => {this.firstPerson = !this.firstPerson;});
     }
 
     handleJump() {
-        if (g_Controls.jump.isPressed && this.canJump) {
+        if (g_Controls.of('key.movement.jump').isPressed && this.canJump) {
             this.playerBody.body.velocity.y = jumpSpeed;
             g_AudioManager.playSound('jump', {volume: 2});
             this.canJump = false;
         }
     }
 
-    /*handleCrouch() {
-        if (this.isCrouching) {
-            playerBody.scale.y = 0.5; // Scale down playerBody height
-            playerBody.position.y = crouchingHeight / 2; // Adjust position when crouching
-        } else {
-            playerBody.scale.y = 1; // Reset to full height
-            playerBody.position.y = standingHeight / 2; // Adjust position when standing
-        }
-    }*/
     handlePlayerMovement() {
         const moveDirection = new CANNON.Vec3(0, 0, 0);
 
-        moveDirection.z = g_Controls.moveForward.isPressed ? -1 : g_Controls.moveBackward.isPressed ? 1 : 0;
-        moveDirection.x = g_Controls.moveLeft.isPressed ? -1 : g_Controls.moveRight.isPressed ? 1 : 0;
+        moveDirection.z = g_Controls.of('key.movement.forward').isPressed ? -1 : g_Controls.of('key.movement.backward').isPressed ? 1 : 0;
+        moveDirection.x = g_Controls.of('key.movement.left').isPressed ? -1 : g_Controls.of('key.movement.right').isPressed ? 1 : 0;
         if (playSound = (moveDirection.length() > 0)) {
             moveDirection.normalize();
         }
 
         const rotatedMovement = this.playerBody.body.quaternion.vmult(moveDirection);
 
-        const speed = g_Controls.sprint.isPressed ? maxSprintSpeed : maxWalkSpeed;
+        const speed = g_Controls.of('key.movement.sprint').isPressed ? maxSprintSpeed : maxWalkSpeed;
         const desiredVelocity = rotatedMovement.scale(speed);
 
         const dV = desiredVelocity.vsub(this.playerBody.body.velocity);
@@ -84,9 +75,9 @@ export class Player {
     updateCameraRotation() {
         // clamp camera pitch
         const min = -Math.PI/2.2, max = Math.PI/2.2;
-        this.pitch -= g_cursor.delta.dy / window.innerHeight * this.sensitivity;
+        this.pitch -= g_Cursor.delta.dy / window.innerHeight * this.sensitivity;
         this.pitch = this.pitch < min ? min : this.pitch > max ? max : this.pitch;
-        this.yaw -= g_cursor.delta.dx / window.innerWidth * this.sensitivity;
+        this.yaw -= g_Cursor.delta.dx / window.innerWidth * this.sensitivity;
 
         // apply pitch and yaw to camera
         const lookVec = new CANNON.Quaternion();
@@ -117,7 +108,7 @@ export class Player {
     }
 
     moveCamera() {
-        if (g_cursor.isLocked)
+        if (g_Cursor.isLocked)
             this.updateCameraRotation();
         if (this.firstPerson)
             g_renderer.camera.position.copy(this.playerBody.mesh.position);

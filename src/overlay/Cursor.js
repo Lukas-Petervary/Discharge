@@ -32,12 +32,12 @@ export class CustomCursor {
         if (document.pointerLockElement === document.documentElement) {
             this.isLocked = true;
             this.cursorElement.style.backgroundColor = 'blue';
-            g_MenuRegistry.hideAllMenus();
+            g_Menu.hideAllMenus();
         } else {
             this.isLocked = false;
             this.cursorElement.style.backgroundColor = 'red';
-            if (!g_MenuRegistry.isMenuOpen && !console.isOpen) {
-                g_MenuRegistry.toggleMenu('pause-menu');
+            if (!g_Menu.isMenuOpen && !console.isOpen) {
+                g_Menu.showMenu('pause-menu');
             }
         }
     }

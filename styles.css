@@ -16,8 +16,8 @@
 }
 
 .overlay {
-    display: none; /* Hidden by default */
-    position: fixed;
+    display: none;
+    position: absolute;
     top: 0;
     left: 0;
     width: 100%;
@@ -27,6 +27,10 @@
     justify-content: center;
     align-items: center;
     text-align: center;
+}
+
+.overlay.active {
+    display: block !important;
 }
 
 .pause-content {
@@ -59,4 +63,38 @@ button:hover {
     position: absolute;
     pointer-events: none;
     z-index: 1001;
+}
+
+
+
+.keybind-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.keybind-container {
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
+
+.keybind-label {
+    flex: 1;
+    font-weight: bold;
+    color: white;
+    margin-right: 10px;
+}
+
+.keybox {
+    display: inline-block;
+    padding: 5px 10px;
+    border: 1px solid #ccc;
+    margin-right: 5px;
+    cursor: pointer;
+    background-color: #f0f0f0;
+}
+
+.keybox:hover {
+    background-color: #e0e0e0;
 }

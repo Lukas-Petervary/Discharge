@@ -1,72 +1,98 @@
+import {ControlsMenu} from "../client/controls/ControlsMenu.js";
+
 export class MenuRegistry {
     constructor() {
         this.menus = {};
+        this.menuStack = [];
         this.isMenuOpen = false;
         this.init();
     }
 
     init() {
-        this.registerMenu('pause-menu', document.getElementById('pause-menu'));
-        this.registerMenu('start-menu', document.getElementById('start-menu'));
+        this.registerMenu(document.getElementById('pause-menu'));
+        this.registerMenu(document.getElementById('start-menu'));
+        this.registerMenu(document.getElementById('settings-menu'));
+        this.registerMenu(document.getElementById('debug-menu'));
+
+        const controlMenuHandler = new ControlsMenu();
+        this.registerMenu(document.getElementById('controls-menu'), () => {controlMenuHandler.renderMenu()});
     }
 
-    registerMenu(id, menuElement) {
-        if (!id || !menuElement) {
+    registerMenu(menuElement, onDisplay = () => {}) {
+        if (!menuElement) {
             throw new Error("Both id and menuElement are required to register a menu.");
         }
-        this.menus[id] = menuElement;
-    }
-
-    toggleMenu(id) {
-        if (!this.menus[id]) {
-            throw new Error(`No menu found with id: ${id}`);
-        }
-        const menuElement = this.menus[id];
-        if (menuElement.style.display === 'block') {
-            menuElement.style.display = 'none';
-            this.isMenuOpen = false;
-        } else {
-            this.hideAllMenus();
-            menuElement.style.display = 'block';
-            this.isMenuOpen = true;
-        }
-        this.updateCursorVisibility();
+        this.menus[menuElement.id] = menuElement;
+        menuElement.onDisplay = onDisplay;
     }
 
     hideAllMenus() {
         for (const id in this.menus) {
-            this.menus[id].style.display = 'none';
+            this.menus[id].classList.remove('active');
         }
+
         this.isMenuOpen = false;
+        this.menuStack = [];
         this.updateCursorVisibility();
     }
 
     showMenu(id) {
-        if (!this.menus[id]) {
+        const menuElement = this.menus[id];
+        if (!menuElement) {
             throw new Error(`No menu found with id: ${id}`);
         }
-        this.hideAllMenus();
-        this.menus[id].style.display = 'block';
+        if (this.menuStack.length > 0) {
+            this.menuStack[this.menuStack.length - 1].classList.remove('active');
+        }
+
+        menuElement.classList.add('active');
         this.isMenuOpen = true;
+        this.menuStack.push(menuElement);
+        menuElement.onDisplay();
+
         this.updateCursorVisibility();
     }
 
     hideMenu(id) {
-        if (!this.menus[id]) {
+        const menuElement = this.menus[id];
+        if (!menuElement) {
             throw new Error(`No menu found with id: ${id}`);
         }
-        this.menus[id].style.display = 'none';
+
+        menuElement.classList.remove('active');
         this.isMenuOpen = false;
+        this.menuStack = this.menuStack.filter(menu => menu.id !== id);
+
         this.updateCursorVisibility();
     }
 
     updateCursorVisibility() {
         if (this.isMenuOpen) {
             document.body.style.cursor = 'default';
-            g_cursor.unlock();
+            g_Cursor.unlock();
         } else {
             document.body.style.cursor = 'none';
-            g_cursor.lock();
+            g_Cursor.lock();
         }
+    }
+
+    displayPrevMenu() {
+        if (this.menuStack.length === 0) {
+            console.error(`No previous menu found`);
+            return;
+        }
+        if (this.menuStack.length === 1) {
+            console.warn(`Must interact with menu to resume game`);
+            return;
+        }
+
+        const currentMenu = this.menuStack.pop();
+        currentMenu.classList.remove('active');
+
+        const prevMenu = this.menuStack[this.menuStack.length - 1];
+        prevMenu.classList.add('active');
+        this.isMenuOpen = true;
+
+        this.updateCursorVisibility();
     }
 }

@@ -1,0 +1,16 @@
+{
+  "lang": "English",
+
+  "key.movement.forward": "Forward",
+  "key.movement.backward": "Backward",
+  "key.movement.left": "Left",
+  "key.movement.right": "Right",
+  "key.movement.sprint": "Sprint",
+  "key.movement.crouch": "Crouch",
+  "key.movement.jump": "Jump",
+
+  "key.camera.third_person": "Third Person",
+
+  "menu.keybinds.add_key": "+ Add Key",
+  "menu.keybinds.press_key": "[Press Key]"
+}
