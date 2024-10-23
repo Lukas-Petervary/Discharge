@@ -14,16 +14,25 @@ export class PlayerBody {
         );
 
         // Cannon capsule object
-        const cylinderShape = new CANNON.Cylinder(height / 2, height / 2, height / 2, 16);
-        const capsuleBody = new CANNON.Body({
-            mass: 1,
-            position: new CANNON.Vec3(0, 0, 0),
-            shape: cylinderShape,
-            material: this.playerMaterial
-        });
+        const cylinderShape = new CANNON.Cylinder(height / 4, height / 4, height / 2, 16);
+        const sphereShape = new CANNON.Sphere(height / 4);
 
-        const sphereShape = new CANNON.Sphere(height / 2);
-        capsuleBody.addShape(sphereShape, new CANNON.Vec3(0, 0, 0), new CANNON.Quaternion().setFromAxisAngle(new CANNON.Vec3(1, 0, 0), Math.PI / 2));
+        const capsuleBody = new CANNON.Body({ mass: 1 });
+
+        const cylinderOffset = new CANNON.Vec3(0, height / 4, 0);
+
+        // Create the two spheres (caps)
+        const topSphereOffset = new CANNON.Vec3(0, height / 2, 0);  // Position for the top sphere
+        const bottomSphereOffset = new CANNON.Vec3(0, -height / 2, 0);  // Position for the bottom sphere
+
+// Add the cylinder to the body at the center
+        capsuleBody.addShape(cylinderShape, cylinderOffset);
+
+// Add the top and bottom spheres to the body
+        capsuleBody.addShape(sphereShape, topSphereOffset);  // Top sphere
+        capsuleBody.addShape(sphereShape, bottomSphereOffset);
+
+        //capsuleBody.addShape(sphereShape, new CANNON.Vec3(0, 0, 0), new CANNON.Quaternion().setFromAxisAngle(new CANNON.Vec3(1, 0, 0), Math.PI / 2));
 
         // Three.js capsule mesh
         const texture = new THREE.TextureLoader().load('../../assets/terrain/Skyboxes/SkySkybox.png');
