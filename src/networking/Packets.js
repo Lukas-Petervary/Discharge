@@ -1,8 +1,7 @@
-import ConnectionManager from "./ConnectionManager.js";
 export { HandshakePacket, MessagePacket, AlertPacket, PositionPacket };
 
-
 let handshakeList = [];
+
 class GenericPacket {
     constructor(type) {
         this.type = type;

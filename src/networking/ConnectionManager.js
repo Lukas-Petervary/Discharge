@@ -8,6 +8,17 @@ export default class ConnectionManager {
         this.connections = new Map(); // Store connections as a map
         this.packetManager = new PacketManager(); // Initialize packet registry
 
+        this.peer.on('open', id => {
+            console.log('My peer ID is: ' + id);
+            document.getElementById('connection-id').textContent = 'Your Connection ID: ' + id;
+        });
+
+        this.peer.on('connection', connection => {
+            console.log('Incoming connection from ' + connection.peer);
+            this.addConnection(connection);
+            this.sendHandshake(connection);
+        });
+
         this.packetManager.registerPacket('handshake', HandshakePacket.handleHandshake.bind(this));
         this.packetManager.registerPacket('message', MessagePacket.handleMessage.bind(this));
         this.packetManager.registerPacket('alert', AlertPacket.handleAlert.bind(this));
@@ -24,19 +35,6 @@ export default class ConnectionManager {
 
     generatePeerId() {
         return Math.random().toString(36).substring(7);
-    }
-
-    init() {
-        this.peer.on('open', id => {
-            console.log('My peer ID is: ' + id);
-            document.getElementById('connection-id').textContent = 'Your Connection ID: ' + id;
-        });
-
-        this.peer.on('connection', connection => {
-            console.log('Incoming connection from ' + connection.peer);
-            this.addConnection(connection);
-            this.sendHandshake(connection);
-        });
     }
 
     connectToPeer(peerId) {
@@ -75,14 +73,6 @@ export default class ConnectionManager {
         const handshakePacket = JSON.stringify(new HandshakePacket(this.peerId), null);
         console.log(`Handshake outbound to "${connection.peer}":\n${handshakePacket}`);
         connection.send(handshakePacket);
-    }
-
-    sendMessage(message) {
-        this.broadcastPacket(new MessagePacket(this.peerId+': '+message));
-    }
-
-    sendAlert(message) {
-        this.broadcastPacket(new AlertPacket(message));
     }
 
     broadcastPacket(packet) {

@@ -25,10 +25,10 @@ export class PlayerBody {
         const topSphereOffset = new CANNON.Vec3(0, height / 2, 0);  // Position for the top sphere
         const bottomSphereOffset = new CANNON.Vec3(0, -height / 2, 0);  // Position for the bottom sphere
 
-// Add the cylinder to the body at the center
+        // Add the cylinder to the body at the center
         capsuleBody.addShape(cylinderShape, cylinderOffset);
 
-// Add the top and bottom spheres to the body
+        // Add the top and bottom spheres to the body
         capsuleBody.addShape(sphereShape, topSphereOffset);  // Top sphere
         capsuleBody.addShape(sphereShape, bottomSphereOffset);
 
@@ -41,8 +41,18 @@ export class PlayerBody {
         const capsuleGeometry = new THREE.CylinderGeometry(height / 2, height / 2, height, 8);
         const capsuleMesh = new THREE.Mesh(capsuleGeometry, capsuleMaterial);
 
+        const sphereBottom = new THREE.SphereGeometry(height / 2, 32, 32);
+        const sphereBottomMesh = new THREE.Mesh(sphereBottom, capsuleMaterial);
+        sphereBottomMesh.position.y = -height / 2;
+
+        const sphereTop = new THREE.SphereGeometry(height / 2, 32, 32);
+        const sphereTopMesh = new THREE.Mesh(sphereTop, capsuleMaterial);
+        sphereTopMesh.position.y = height / 2;
+
         const capsuleGroup = new THREE.Group();
         capsuleGroup.add(capsuleMesh);
+        capsuleGroup.add(sphereBottomMesh);
+        capsuleGroup.add(sphereTopMesh);
         capsuleMesh.castShadow = true;
 
         // Integrate callbacks for physics

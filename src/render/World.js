@@ -46,7 +46,7 @@ export class World {
     }
 
     // Function to load a GLTF model and integrate with Cannon.js for physics
-    loadGLTFModel(path) {
+    async loadGLTFModel(path) {
         const loader = new THREE.GLTFLoader();
         loader.load(path, (gltf) => {
             const model = gltf.scene;

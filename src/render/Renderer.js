@@ -2,7 +2,6 @@ export class Renderer {
     constructor() {
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        this.camera.position.set(0, 1, 0);
         this.sceneRenderer = new THREE.WebGLRenderer({ antialias: true });
 
         this.objects = [];
@@ -12,18 +11,20 @@ export class Renderer {
     };
 
     init() {
+        this.sceneRenderer.outputEncoding = THREE.sRGBEncoding;
+        this.sceneRenderer.gammaFactor = 2.2;
+        this.sceneRenderer.shadowMap.enabled = true;
+        this.sceneRenderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        this.sceneRenderer.setPixelRatio(window.devicePixelRatio);
         this.sceneRenderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(this.sceneRenderer.domElement);
-        this.handleResize();
-        this.skyBox('SkySkybox.png');
-    }
 
-    handleResize() {
         window.addEventListener('resize', () => {
             this.camera.aspect = window.innerWidth / window.innerHeight;
             this.camera.updateProjectionMatrix();
             this.sceneRenderer.setSize(window.innerWidth, window.innerHeight);
-        });
+        }, false);
+        this.skyBox('SkySkybox.png');
     }
 
     // Create Skybox

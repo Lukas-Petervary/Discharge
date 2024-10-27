@@ -22,28 +22,23 @@ async function init() {
     window.g_Controls = new Controls();
 
     window.g_renderer = new Renderer();
-    g_renderer.camera.position.set(0, 1.5, 2);
-
     window.g_world = new World();
 
     window.g_MainPlayer = new Player();
-
     window.g_ConnectionManager = new ConnectionManager();
-    g_ConnectionManager.init();
-
-    console.log('Finished instantiating connection');
-    g_world.loadGLTFModel('assets/terrain/maps/portbase/scene.gltf');
 
     window.runtimeStats = new Stats();
 }
 
 function onStart() {
+    g_world.loadGLTFModel('assets/terrain/maps/portbase/scene.gltf');
+
     runtimeStats.showPanel(0);
-    runtimeStats.dom.style.display = 'none';
+    //runtimeStats.dom.style.display = 'none';
     document.body.appendChild(runtimeStats.dom);
 
     g_Menu.showMenu('pause-menu');
-    g_world.addSphere(1, { x: 0, y: 5, z: 0 });
+    //g_world.addSphere(1, { x: 0, y: 5, z: 0 });
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 1);
     g_renderer.scene.add(ambientLight);
@@ -58,22 +53,22 @@ function updateWorld(timeStep) {
     g_world.step(timeStep);
 }
 
-function render() {
+function render(dt) {
     g_MainPlayer.moveCamera();
     g_Cursor.delta = {dx: 0, dy: 0};
-    g_renderer.render();
+    g_renderer.render(dt);
     g_KeybindManager.update();
 }
 
-let lastUpdateTime = 0;
+let prevT = 0;
 const fixedTimeStep = 1000 / 60; // 60 updates per second
 let accumulator = 0;
 
-function gameLoop(currentTime) {
+function gameLoop(t) {
     runtimeStats.begin();
-    const deltaTime = currentTime - lastUpdateTime;
-    lastUpdateTime = currentTime;
-    accumulator += deltaTime;
+    const dt = t - prevT;
+    prevT = t;
+    accumulator += dt;
 
     // Process fixed time steps
     while (accumulator >= fixedTimeStep) {
@@ -81,7 +76,6 @@ function gameLoop(currentTime) {
         accumulator -= fixedTimeStep;
     }
 
-    // Render frame with interpolation
     const interpolation = accumulator / fixedTimeStep;
     render(interpolation);
 
