@@ -31,14 +31,13 @@ async function init() {
 }
 
 function onStart() {
-    g_world.loadGLTFModel('assets/terrain/maps/portbase/scene.gltf');
+    g_world.addPlane();
 
     runtimeStats.showPanel(0);
-    //runtimeStats.dom.style.display = 'none';
+    runtimeStats.dom.style.display = 'none';
     document.body.appendChild(runtimeStats.dom);
 
-    g_Menu.showMenu('pause-menu');
-    //g_world.addSphere(1, { x: 0, y: 5, z: 0 });
+    g_Menu.showMenu('start-menu');
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 1);
     g_renderer.scene.add(ambientLight);
@@ -64,27 +63,39 @@ let prevT = 0;
 const fixedTimeStep = 1000 / 60; // 60 updates per second
 let accumulator = 0;
 
-function gameLoop(t) {
-    runtimeStats.begin();
-    const dt = t - prevT;
-    prevT = t;
-    accumulator += dt;
+function gameLoop() {
+    requestAnimationFrame((t) => {
+        runtimeStats.begin();
+        const dt = t - prevT;
+        prevT = t;
+        accumulator += dt;
 
-    // Process fixed time steps
-    while (accumulator >= fixedTimeStep) {
-        updateWorld(fixedTimeStep / 1000);
-        accumulator -= fixedTimeStep;
-    }
+        // Process fixed time steps
+        if (!g_Menu.menus['start-menu'].isDisplayed) {
+            while (accumulator >= fixedTimeStep) {
+                updateWorld(fixedTimeStep / 1000);
+                accumulator -= fixedTimeStep;
+            }
 
-    const interpolation = accumulator / fixedTimeStep;
-    render(interpolation);
+            const interpolation = accumulator / fixedTimeStep;
+            render(interpolation);
+        }
 
-    runtimeStats.end();
-    requestAnimationFrame(gameLoop);
+        runtimeStats.end();
+        
+        gameLoop();
+    });
 }
 
 await init().then(() => {
-        console.log('Finished initializing');
-        onStart();
-        requestAnimationFrame(gameLoop);
+    console.log('Finished initializing');
+    let started = false;
+    window.startGameLoop = () => {
+        document.getElementById('start-menu').style.display = 'none';
+        if (!started) {
+            started = true;
+            gameLoop();
+        }
+    };
+    onStart();
 });

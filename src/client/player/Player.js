@@ -14,7 +14,7 @@ setInterval(() => {
 export class Player {
     constructor() {
         // Player Body Mesh
-        this.playerBody = new PlayerBody()
+        this.playerBody = new PlayerBody();
         this.sensitivity = 3;
 
         // Player look direction
@@ -108,8 +108,8 @@ export class Player {
     }
 
     moveCamera() {
-        if (g_Cursor.isLocked)
-            this.updateCameraRotation();
+        if (g_Cursor.isLocked) this.updateCameraRotation();
+
         if (this.firstPerson)
             g_renderer.camera.position.copy(this.playerBody.mesh.position);
         else

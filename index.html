@@ -21,10 +21,17 @@
 
         <div id="custom-cursor"></div>
 
+        <div id="loading-screen">
+            <div id="loading-text">Loading...</div>
+            <div id="loading-spinner"></div>
+            <script src="index.js"></script>
+        </div>
+
         <div id="menu-container">
             <div id="start-menu" class="overlay">
-                <button onclick="g_Menu.hideAllMenus()">Play Game</button>
-                <button onclick="g_Menu.showMenu('settings-menu')">Settings</button>
+                <button id="main-play-button" onclick="g_Menu.hideAllMenus(); window.startGameLoop()">Play Game</button>
+                <button id="create-lobby-button">Create Lobby</button>
+                <button id="join-lobby-button">Join Lobby</button>
             </div>
 
             <div id="pause-menu" class="overlay">

@@ -39,11 +39,26 @@ export class World {
         return physicsObject;
     }
 
-    fixToAngle(object, axis = 'y') {
-        const quaternion = new CANNON.Quaternion();
-        quaternion.setFromAxisAngle(new CANNON.Vec3(axis === 'x' ? 1 : 0, axis === 'y' ? 1 : 0, axis === 'z' ? 1 : 0), 0);
-        object.body.quaternion.copy(quaternion);
+    addPlane(pos = new CANNON.Vec3(0,0,0)) {
+        const planeGeometry = new THREE.PlaneGeometry(100, 100);  // 100x100 units
+        const planeMaterial = new THREE.MeshBasicMaterial({ color: 0x999999, side: THREE.DoubleSide });
+        const planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
+        planeMesh.rotation.x = -Math.PI / 2;
+        planeMesh.receiveShadow = true;
+
+        const groundBody = new CANNON.Body({
+            mass: 0,
+            material: this.groundMaterial,
+        });
+        const groundShape = new CANNON.Plane();
+        groundBody.addShape(groundShape);
+        groundBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
+
+        const physMesh = new PhysicsMesh(groundBody, planeMesh);
+        physMesh.add();
+        physMesh.body.position = pos;
     }
+
 
     // Function to load a GLTF model and integrate with Cannon.js for physics
     async loadGLTFModel(path) {
@@ -96,10 +111,7 @@ export class World {
         });
     }
 
-
-
-
-// Function to create a Cannon.js shape from a Three.js mesh
+    // Function to create a Cannon.js shape from a Three.js mesh
     createCannonShape(threeMesh) {
         if (!threeMesh.geometry || !threeMesh.geometry.isBufferGeometry) {
             console.error('Invalid or undefined BufferGeometry:', threeMesh.geometry);
@@ -168,77 +180,6 @@ export class World {
         this.objects.forEach(obj => {
             obj.update();
         });
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    addCapsule(radius, height, position) {
-        // Cannon.js capsule
-        const playerMaterial = new CANNON.Material('player');
-        this.contactMaterial = new CANNON.ContactMaterial(playerMaterial, this.groundMaterial, {
-            friction: 0,
-            restitution: 0,
-        });
-        const capsuleBody = new CANNON.Body({
-            mass: 1,
-            position: new CANNON.Vec3(position.x, position.y, position.z),
-            material: playerMaterial,
-        });
-
-        const sphereShape = new CANNON.Sphere(radius);
-        const cylinderShape = new CANNON.Cylinder(radius, radius, height, 8);
-
-        capsuleBody.addShape(sphereShape, new CANNON.Vec3(0, height / 2, 0));
-        capsuleBody.addShape(sphereShape, new CANNON.Vec3(0, -height / 2, 0));
-        capsuleBody.addShape(cylinderShape, new CANNON.Vec3(0, 0, 0), new CANNON.Quaternion().setFromAxisAngle(new CANNON.Vec3(1, 0, 0), Math.PI / 2));
-
-        // Three.js capsule
-        const capsuleGeometry = new THREE.CylinderGeometry(radius, radius, height, 8);
-        const capsuleMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-        const capsuleMesh = new THREE.Mesh(capsuleGeometry, capsuleMaterial);
-
-        // Create top sphere mesh
-        const topSphereGeometry = new THREE.SphereGeometry(radius, 32, 32);
-        const topSphereMesh = new THREE.Mesh(topSphereGeometry, capsuleMaterial);
-        topSphereMesh.position.y = height / 2;
-
-        // Create bottom sphere mesh
-        const bottomSphereGeometry = new THREE.SphereGeometry(radius, 32, 32);
-        const bottomSphereMesh = new THREE.Mesh(bottomSphereGeometry, capsuleMaterial);
-        bottomSphereMesh.position.y = -height / 2;
-
-        // Combine meshes
-        const capsuleGroup = new THREE.Group();
-        capsuleGroup.add(capsuleMesh);
-        capsuleGroup.add(topSphereMesh);
-        capsuleGroup.add(bottomSphereMesh);
-
-        // Create PhysicsObject
-        const physicsObject = new PhysicsMesh(capsuleBody, capsuleGroup);
-        physicsObject.add();
-        return physicsObject;
     }
 }
 

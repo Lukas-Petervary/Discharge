@@ -104,6 +104,8 @@ export class KeybindManager {
     }
 
     onKeyDown(e) {
+        if (g_Menu.menus['controls-menu'].isDisplayed) return;
+
         const key = e.key;
         const keybinds = this.keybinds[key];
         if (keybinds) {
@@ -128,6 +130,8 @@ export class KeybindManager {
     }
 
     onKeyUp(e) {
+        if (g_Menu.menus['controls-menu'].isDisplayed) return;
+
         const key = e.key;
         const keybinds = this.keybinds[key];
         if (keybinds) {
@@ -166,12 +170,12 @@ export class KeybindManager {
 export class Controls {
     constructor() {
         const keybindsJSON = localStorage.getItem('keybinds');
-        if (!keybindsJSON) {
+        if (keybindsJSON) {
+            this.loadKeybinds(keybindsJSON);
+        } else {
             this.defaultKeybinds();
             this.saveKeybinds();
-            return;
         }
-        this.loadKeybinds(keybindsJSON);
     }
 
     saveKeybinds() {
@@ -183,8 +187,7 @@ export class Controls {
         localStorage.setItem('keybinds', JSON.stringify(uniqueKeybindsData));
     }
 
-    loadKeybinds() {
-        const keybindsJSON = localStorage.getItem('keybinds');
+    loadKeybinds(keybindsJSON) {
         if (keybindsJSON) {
             const keybindsData = JSON.parse(keybindsJSON);
             g_KeybindManager.keybindArray = keybindsData.map(data => Keybind.fromJSON(data));
@@ -209,5 +212,8 @@ export class Controls {
         g_KeybindManager.registerKeybind('key.movement.jump', [' ']);
 
         g_KeybindManager.registerKeybind('key.camera.third_person', ['F4']);
+        g_KeybindManager.registerKeybind('key.menu.back', ['Escape']).onPress(() => {
+            g_Menu.displayPrevMenu();
+        });
     }
 }

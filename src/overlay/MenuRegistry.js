@@ -22,13 +22,15 @@ export class MenuRegistry {
         if (!menuElement) {
             throw new Error("Both id and menuElement are required to register a menu.");
         }
-        this.menus[menuElement.id] = menuElement;
+        menuElement.isDisplayed = false;
         menuElement.onDisplay = onDisplay;
+        this.menus[menuElement.id] = menuElement;
     }
 
     hideAllMenus() {
         for (const id in this.menus) {
             this.menus[id].classList.remove('active');
+            this.menus[id].isDisplayed = false;
         }
 
         this.isMenuOpen = false;
@@ -45,7 +47,9 @@ export class MenuRegistry {
             this.menuStack[this.menuStack.length - 1].classList.remove('active');
         }
 
+
         menuElement.classList.add('active');
+        menuElement.isDisplayed = true;
         this.isMenuOpen = true;
         this.menuStack.push(menuElement);
         menuElement.onDisplay();
@@ -59,6 +63,7 @@ export class MenuRegistry {
             throw new Error(`No menu found with id: ${id}`);
         }
 
+        menuElement.isDisplayed = false;
         menuElement.classList.remove('active');
         this.isMenuOpen = false;
         this.menuStack = this.menuStack.filter(menu => menu.id !== id);
@@ -88,6 +93,7 @@ export class MenuRegistry {
 
         const currentMenu = this.menuStack.pop();
         currentMenu.classList.remove('active');
+        currentMenu.isDisplayed = false;
 
         const prevMenu = this.menuStack[this.menuStack.length - 1];
         prevMenu.classList.add('active');

@@ -1,6 +1,7 @@
 import { PhysicsMesh } from "../../render/PhysicsMesh.js";
 
 const height = 2;
+const radius = 0.75;
 const crouchHeight = 1;
 
 export class PlayerBody {
@@ -9,51 +10,50 @@ export class PlayerBody {
         g_world.world.addContactMaterial(
             new CANNON.ContactMaterial(this.playerMaterial, g_world.groundMaterial, {
                 friction: 0,
-                restitution: 0
+                restitution: 0.1
             })
         );
 
         // Cannon capsule object
-        const cylinderShape = new CANNON.Cylinder(height / 4, height / 4, height / 2, 16);
-        const sphereShape = new CANNON.Sphere(height / 4);
+        const capsuleBody = new CANNON.Body({
+            mass: 1,
+            material: this.playerMaterial,
+            fixedRotation: true,
+            linearDamping: 0.9,
+        });
 
-        const capsuleBody = new CANNON.Body({ mass: 1 });
+        const cylinder = new CANNON.Cylinder(radius, radius, height - 2 * radius, 8);
+        const cylinderQuaternion = new CANNON.Quaternion();
+        cylinderQuaternion.setFromEuler(Math.PI / 2, 0, 0);  // Rotate so it's vertical
+        capsuleBody.addShape(cylinder, new CANNON.Vec3(0, 0, 0), cylinderQuaternion);
 
-        const cylinderOffset = new CANNON.Vec3(0, height / 4, 0);
+        const B_sphereTop = new CANNON.Sphere(radius);
+        capsuleBody.addShape(B_sphereTop, new CANNON.Vec3(0, height / 2 - radius, 0));
 
-        // Create the two spheres (caps)
-        const topSphereOffset = new CANNON.Vec3(0, height / 2, 0);  // Position for the top sphere
-        const bottomSphereOffset = new CANNON.Vec3(0, -height / 2, 0);  // Position for the bottom sphere
-
-        // Add the cylinder to the body at the center
-        capsuleBody.addShape(cylinderShape, cylinderOffset);
-
-        // Add the top and bottom spheres to the body
-        capsuleBody.addShape(sphereShape, topSphereOffset);  // Top sphere
-        capsuleBody.addShape(sphereShape, bottomSphereOffset);
-
-        //capsuleBody.addShape(sphereShape, new CANNON.Vec3(0, 0, 0), new CANNON.Quaternion().setFromAxisAngle(new CANNON.Vec3(1, 0, 0), Math.PI / 2));
+        const B_sphereBottom = new CANNON.Sphere(radius);
+        capsuleBody.addShape(B_sphereBottom, new CANNON.Vec3(0, -height / 2 + radius, 0));
 
         // Three.js capsule mesh
         const texture = new THREE.TextureLoader().load('../../assets/terrain/Skyboxes/SkySkybox.png');
         const capsuleMaterial = new THREE.MeshPhongMaterial({ map: texture });
 
-        const capsuleGeometry = new THREE.CylinderGeometry(height / 2, height / 2, height, 8);
-        const capsuleMesh = new THREE.Mesh(capsuleGeometry, capsuleMaterial);
+        const cylinderHeight = height - 2 * radius;  // Adjusted to leave space for hemispheres
+        const cylinderGeometry = new THREE.CylinderGeometry(radius, radius, cylinderHeight, 8);
+        const cylinderMesh = new THREE.Mesh(cylinderGeometry, capsuleMaterial);
+        cylinderMesh.position.set(0, 0, 0); // Center cylinder
 
-        const sphereBottom = new THREE.SphereGeometry(height / 2, 32, 32);
-        const sphereBottomMesh = new THREE.Mesh(sphereBottom, capsuleMaterial);
-        sphereBottomMesh.position.y = -height / 2;
+        const sphereGeometry = new THREE.SphereGeometry(radius, 8, 8);
+        const topSphereMesh = new THREE.Mesh(sphereGeometry, capsuleMaterial);
+        topSphereMesh.position.set(0, cylinderHeight / 2, 0);
 
-        const sphereTop = new THREE.SphereGeometry(height / 2, 32, 32);
-        const sphereTopMesh = new THREE.Mesh(sphereTop, capsuleMaterial);
-        sphereTopMesh.position.y = height / 2;
+        const bottomSphereMesh = new THREE.Mesh(sphereGeometry, capsuleMaterial);
+        bottomSphereMesh.position.set(0, -cylinderHeight / 2, 0);
 
-        const capsuleGroup = new THREE.Group();
-        capsuleGroup.add(capsuleMesh);
-        capsuleGroup.add(sphereBottomMesh);
-        capsuleGroup.add(sphereTopMesh);
-        capsuleMesh.castShadow = true;
+        const playerMesh = new THREE.Group();
+        playerMesh.add(cylinderMesh);
+        playerMesh.add(topSphereMesh);
+        playerMesh.add(bottomSphereMesh);
+        playerMesh.castShadow = true;
 
         // Integrate callbacks for physics
         const contactNormal = new CANNON.Vec3();
@@ -71,20 +71,9 @@ export class PlayerBody {
             });
         };
 
-        const forceUpright = (body) => {
-            const q = body.quaternion;
-            const yaw = Math.atan2(2 * (q.w * q.y + q.z * q.x), 1 - 2 * (q.y * q.y + q.x * q.x));
-
-            const newQuaternion = new CANNON.Quaternion();
-            newQuaternion.setFromEuler(0, yaw, 0, 'YXZ');
-
-            body.quaternion.copy(newQuaternion);
-            body.angularVelocity.set(0, 0, 0);
-        };
-
         // Create Physics Object
-        this.physicsMesh = new PhysicsMesh(capsuleBody, capsuleGroup, addEventListeners.bind(this), forceUpright.bind(this));
+        this.physicsMesh = new PhysicsMesh(capsuleBody, playerMesh, addEventListeners.bind(this));
         this.physicsMesh.add();
-        return this.physicsMesh; 
+        return this.physicsMesh;
     }
 }

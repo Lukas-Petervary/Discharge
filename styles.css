@@ -1,7 +1,54 @@
+@import url('https://fonts.googleapis.com/css2?family=Audiowide&family=Comfortaa:wght@300..700&display=swap');
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+}
+
+#loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: black;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9000;
+    opacity: 1;
+    transition: opacity 1s ease;
+
+    font-family: 'Audiowide', cursive;
+    color: white;
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+#loading-text {
+    animation: fadeInOut 2s infinite;
+}
+
+@keyframes fadeInOut {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Loading spinner */
+#loading-spinner {
+    width: 60px;
+    height: 60px;
+    border: 8px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    transition: inherit;
+}
+
+@keyframes spin {
+    100% { transform: rotate(360deg); }
 }
 
 #custom-cursor {
@@ -18,11 +65,13 @@
 .overlay {
     display: none;
     position: absolute;
+    font-family: "Audiowide", sans-serif;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
     z-index: 1000;
     justify-content: center;
     align-items: center;
@@ -49,6 +98,7 @@ button {
     border-radius: 5px;
     background-color: #007BFF;
     color: white;
+    font-family: inherit;
 }
 
 button:hover {
@@ -64,8 +114,6 @@ button:hover {
     pointer-events: none;
     z-index: 1001;
 }
-
-
 
 .keybind-row {
     display: flex;
@@ -97,4 +145,32 @@ button:hover {
 
 .keybox:hover {
     background-color: #e0e0e0;
+}
+
+#start-menu {
+    background-color: black;
+    display: block;
+}
+
+#start-menu button {
+    background-color: transparent;
+    position: absolute;
+    width: fit-content;
+    height: fit-content;
+    font-size: 5vw;
+}
+
+#main-play-button {
+    bottom: 20vh;
+    left: 10vw;
+}
+
+#join-lobby-button {
+    bottom: 20vh;
+    right: 10vw;
+}
+
+#create-lobby-button {
+    bottom: 40vh;
+    right: 10vw;
 }

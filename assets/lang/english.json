@@ -10,6 +10,7 @@
   "key.movement.jump": "Jump",
 
   "key.camera.third_person": "Third Person",
+  "key.menu.back": "Back Menu",
 
   "menu.keybinds.add_key": "+ Add Key",
   "menu.keybinds.press_key": "[Press Key]"
