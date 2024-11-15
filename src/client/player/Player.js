@@ -1,3 +1,5 @@
+import * as CANNON from '/dist/cannon-es.js';
+import * as THREE from '/dist/three.module.js';
 import { PlayerBody } from "./PlayerBody.js";
 
 const maxWalkSpeed = 5;
@@ -97,7 +99,6 @@ export class Player {
 
         // raytracing not working ?? ty cannon
         const ray = new CANNON.Ray(this.playerBody.body.position, new CANNON.Vec3().copy(desiredCamPos));
-        ray._updateDirection();
         const result = new CANNON.RaycastResult();
 
         const collision = ray.intersectBodies(g_world.world.bodies, result);

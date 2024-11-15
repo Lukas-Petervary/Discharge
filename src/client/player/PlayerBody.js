@@ -1,3 +1,5 @@
+import * as CANNON from '/dist/cannon-es.js';
+import * as THREE from '/dist/three.module.js';
 import { PhysicsMesh } from "../../render/PhysicsMesh.js";
 
 const height = 2;

@@ -1,3 +1,5 @@
+import * as THREE from '/dist/three.module.js';
+
 export class AudioManager {
     constructor() {
         this.audioContext = new (window.AudioContext || window.webkitAudioContext)();

@@ -1,3 +1,5 @@
+import * as THREE from '/dist/three.module.js';
+
 export class Renderer {
     constructor() {
         this.scene = new THREE.Scene();

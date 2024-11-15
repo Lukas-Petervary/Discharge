@@ -1,3 +1,5 @@
+import * as THREE from '/dist/three.module.js';
+
 THREE.GLTFLoader = ( function () {
 
 	function GLTFLoader( manager ) {

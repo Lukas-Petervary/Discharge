@@ -1,4 +1,5 @@
 import ConnectionManager from './networking/ConnectionManager.js';
+import * as THREE from '/dist/three.module.js';
 import { CustomCursor } from "./overlay/Cursor.js";
 import { Renderer } from "./render/Renderer.js";
 import { World } from "./render/World.js";
@@ -18,6 +19,7 @@ async function init() {
 
     window.g_Cursor = new CustomCursor();
     window.g_KeybindManager = new KeybindManager();
+
     window.g_Menu = new MenuRegistry();
     window.g_Controls = new Controls();
 
@@ -32,6 +34,7 @@ async function init() {
 
 function onStart() {
     g_world.addPlane();
+    g_KeybindManager.registerKeybind('spawn-sphere', ['f'], false).onPress(() => g_world.addSphere(1.5, {x: 0, y: 0, z: 0}));
 
     runtimeStats.showPanel(0);
     runtimeStats.dom.style.display = 'none';

@@ -21,7 +21,7 @@
     opacity: 1;
     transition: opacity 1s ease;
 
-    font-family: 'Audiowide', cursive;
+    font-family: 'Times New Roman', sans-serif;
     color: white;
     font-size: 24px;
     margin-bottom: 20px;
@@ -65,7 +65,7 @@
 .overlay {
     display: none;
     position: absolute;
-    font-family: "Audiowide", sans-serif;
+    font-family: "Times New Roman", sans-serif;
     top: 0;
     left: 0;
     width: 100%;

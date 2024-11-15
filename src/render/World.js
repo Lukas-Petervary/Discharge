@@ -1,4 +1,7 @@
+import * as CANNON from '/dist/cannon-es.js';
+import * as THREE from '/dist/three.module.js';
 import { PhysicsMesh } from './PhysicsMesh.js';
+import * as NULL_SHADER from '../../assets/textures/shaders/nullTexture.js'
 
 export class World {
     constructor() {
@@ -30,8 +33,7 @@ export class World {
 
         // Three.js sphere
         const sphereGeometry = new THREE.SphereGeometry(radius, 32, 32);
-        const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff });
-        const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        const sphereMesh = new THREE.Mesh(sphereGeometry, NULL_SHADER.shaderMaterial);
 
         // Create PhysicsObject
         const physicsObject = new PhysicsMesh(sphereBody, sphereMesh);
