@@ -1,4 +1,4 @@
-import * as THREE from '/dist/three.module.js';
+import * as THREE from 'three';
 
 export class AudioManager {
     constructor() {

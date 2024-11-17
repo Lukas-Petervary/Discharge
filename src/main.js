@@ -1,5 +1,5 @@
 import ConnectionManager from './networking/ConnectionManager.js';
-import * as THREE from '/dist/three.module.js';
+import * as THREE from 'three';
 import { CustomCursor } from "./overlay/Cursor.js";
 import { Renderer } from "./render/Renderer.js";
 import { World } from "./render/World.js";

@@ -1,5 +1,5 @@
-import * as CANNON from '/dist/cannon-es.js';
-import * as THREE from '/dist/three.module.js';
+import * as CANNON from 'cannon';
+import * as THREE from 'three';
 import { PlayerBody } from "./PlayerBody.js";
 
 const maxWalkSpeed = 5;
