@@ -95,6 +95,11 @@ export class Server {
         g_ConnectionManager.connections[peerId]._conn.close();
     }
 
+    onLeave(peerId) {
+        this.players[peerId].remove();
+        delete this.players[peerId];
+    }
+
     readyButton() {
         this.lobbyReadied = !this.lobbyReadied;
 

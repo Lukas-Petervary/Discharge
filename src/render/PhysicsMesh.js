@@ -23,6 +23,12 @@ export class PhysicsMesh {
         this.mesh.position.copy( _pos(this.body.position) );
         this.mesh.quaternion.copy( _quat(this.body.quaternion) );
     }
+
+    remove() {
+        g_renderer.scene.remove(this.mesh);
+        g_world.world.removeBody(this.body);
+        g_world.objects.splice(g_world.objects.indexOf(this), 1);
+    }
 }
 
 function _pos(pos) {

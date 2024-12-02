@@ -168,6 +168,7 @@ export default class ConnectionManager {
             console.log(`Connection with "${connection.peer}" closed`);
             delete this.connections[connection.peer];
             g_Lobby.refreshLobbyUI()
+            g_Lobby.onLeave(connection.peer);
         });
     }
 
