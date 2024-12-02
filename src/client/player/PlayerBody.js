@@ -63,7 +63,7 @@ export class PlayerBody extends PhysicsMesh {
     }
 
     static Mesh_() {
-        const texture = new THREE.TextureLoader().load('../../assets/terrain/Skyboxes/SkySkybox.png');
+        const texture = new THREE.TextureLoader().load('/assets/terrain/Skyboxes/SkySkybox.png');
         const capsuleMaterial = new THREE.MeshPhongMaterial({ map: texture });
 
         const cylinderHeight = height - 2 * radius;  // Adjusted to leave space for hemispheres

@@ -216,7 +216,6 @@ export class JoinGamePacket extends GenericPacket {
 
     static handleJoinGame(packet) {
         console.log(`${packet.peer} joined the world!`);
-        g_world.addSphere(0.25, {x: 0, y: 0, z: 0});
         g_Lobby.createPlayerBody(packet.peer);
     }
 }
