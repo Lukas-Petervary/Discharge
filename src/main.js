@@ -1,40 +1,47 @@
 import ConnectionManager from './networking/ConnectionManager.js';
 import * as THREE from 'three';
-import { CustomCursor } from "./overlay/Cursor.js";
 import { Renderer } from "./render/Renderer.js";
 import { World } from "./render/World.js";
-import { Player } from "./client/player/Player.js";
+import { ClientPlayer } from "./client/player/ClientPlayer.js";
 import { MenuRegistry } from "./overlay/MenuRegistry.js";
 import { AudioManager } from "./client/audio/AudioManager.js";
-import { Controls, KeybindManager } from "./client/controls/Keybinds.js";
-import { Translatable } from "./client/Translatable.js";
+import { Controls } from "./client/controls/Keybinds.js";
 import { Stats } from "./overlay/Stats.js";
+import { Lobby } from "./networking/Lobby.js";
 
 async function init() {
     window.g_AudioManager = new AudioManager();
     g_AudioManager.init();
 
-    window.Lang = new Translatable();
-    Lang.swapJson('assets/lang/english.json');
-
-    window.g_Cursor = new CustomCursor();
-    window.g_KeybindManager = new KeybindManager();
-
     window.g_Menu = new MenuRegistry();
-    window.g_Controls = new Controls();
 
     window.g_renderer = new Renderer();
     window.g_world = new World();
 
-    window.g_MainPlayer = new Player();
+    window.g_Controls = Controls;
+    window.g_Client = new ClientPlayer();
     window.g_ConnectionManager = new ConnectionManager();
+    window.g_Lobby = new Lobby();
 
     window.runtimeStats = new Stats();
+
+    const _originalLog = console.log;
+    const _originalWarn = console.warn;
+    const _originalError = console.error;
+    const _originalTrace = console.trace;
+
+    console.log = console.warn = console.error = console.trace = () => {};
+    window.enableDebug = () => {
+        console.log = _originalLog;
+        console.warn = _originalWarn;
+        console.error = _originalError;
+        console.trace = _originalTrace;
+        console.log("%c! DEBUG MODE ENABLED !", "background: yellow; color: black; font-size: 200%;")
+    }
 }
 
 function onStart() {
     g_world.addPlane();
-    g_KeybindManager.registerKeybind('spawn-sphere', ['f'], false).onPress(() => g_world.addSphere(1.5, {x: 0, y: 0, z: 0}));
 
     runtimeStats.showPanel(0);
     runtimeStats.dom.style.display = 'none';
@@ -44,60 +51,61 @@ function onStart() {
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 1);
     g_renderer.scene.add(ambientLight);
-}
 
-function updateWorld(timeStep) {
-    g_AudioManager.pushPlayerPosition();
-
-    if(g_Cursor.isLocked)
-        g_MainPlayer.move();
-
-    g_world.step(timeStep);
+    window.addEventListener('beforeunload', (event) => {
+        event.preventDefault();
+        /** TODO:
+         * Save persistent data to local storage
+         * Pop-up to download persistent data in json file
+         */
+    })
+    window.addEventListener('unload', () => g_ConnectionManager.peer.destroy());
 }
 
 function render(dt) {
-    g_MainPlayer.moveCamera();
-    g_Cursor.delta = {dx: 0, dy: 0};
+    g_Client.moveCamera();
     g_renderer.render(dt);
-    g_KeybindManager.update();
 }
 
 let prevT = 0;
-const fixedTimeStep = 1000 / 60; // 60 updates per second
+const fixedTimeStep = 1000 / 60;
 let accumulator = 0;
+let running = false;
 
-function gameLoop() {
-    requestAnimationFrame((t) => {
-        runtimeStats.begin();
-        const dt = t - prevT;
-        prevT = t;
-        accumulator += dt;
+function gameLoop(t) {
+    if (!running) return;
 
-        // Process fixed time steps
-        if (!g_Menu.menus['start-menu'].isDisplayed) {
-            while (accumulator >= fixedTimeStep) {
-                updateWorld(fixedTimeStep / 1000);
-                accumulator -= fixedTimeStep;
-            }
+    runtimeStats.begin();
+    const dt = t - prevT;
+    prevT = t;
+    accumulator += dt;
 
-            const interpolation = accumulator / fixedTimeStep;
-            render(interpolation);
+    while (accumulator >= fixedTimeStep) {
+        g_Controls.update();
+        if(g_Controls.cameraControls.isEnabled) {
+            g_Client.move();
         }
+        g_AudioManager.pushPlayerPosition();
+        g_world.step(fixedTimeStep);
 
-        runtimeStats.end();
-        
-        gameLoop();
-    });
+        accumulator -= fixedTimeStep;
+    }
+
+    const interpolation = accumulator / fixedTimeStep;
+    render(interpolation);
+    runtimeStats.end();
+
+    requestAnimationFrame(gameLoop);
 }
 
 await init().then(() => {
     console.log('Finished initializing');
-    let started = false;
     window.startGameLoop = () => {
-        document.getElementById('start-menu').style.display = 'none';
-        if (!started) {
-            started = true;
-            gameLoop();
+        if (!running) {
+            running = true;
+            requestAnimationFrame(gameLoop);
+        } else {
+            running = false;
         }
     };
     onStart();

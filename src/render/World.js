@@ -12,13 +12,26 @@ export class World {
         this.world.solver.iterations = 10;
 
         // Materials
+        this.initMaterials();
+    }
+
+    initMaterials() {
         this.defaultMaterial = new CANNON.Material('default');
+        this.playerMaterial = new CANNON.Material('player');
         this.groundMaterial = new CANNON.Material('groundMaterial');
-        this.contactMaterial = new CANNON.ContactMaterial(this.defaultMaterial, this.groundMaterial, {
-            friction: 0,
-            restitution: 0,
-        });
-        this.world.addContactMaterial(this.contactMaterial);
+
+        this.world.addContactMaterial(
+            new CANNON.ContactMaterial(this.playerMaterial, this.groundMaterial, {
+                friction: 0,
+                restitution: 0.1
+            })
+        );
+        this.world.addContactMaterial(
+            new CANNON.ContactMaterial(this.defaultMaterial, this.groundMaterial, {
+                friction: 0,
+                restitution: 0,
+            })
+        );
     }
 
     addSphere(radius, position) {
@@ -34,6 +47,7 @@ export class World {
         // Three.js sphere
         const sphereGeometry = new THREE.SphereGeometry(radius, 32, 32);
         const sphereMesh = new THREE.Mesh(sphereGeometry, NULL_SHADER.shaderMaterial);
+        sphereMesh.castShadow = sphereMesh.receiveShadow = true;
 
         // Create PhysicsObject
         const physicsObject = new PhysicsMesh(sphereBody, sphereMesh);
@@ -46,7 +60,7 @@ export class World {
         const planeMaterial = new THREE.MeshBasicMaterial({ color: 0x999999, side: THREE.DoubleSide });
         const planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
         planeMesh.rotation.x = -Math.PI / 2;
-        planeMesh.receiveShadow = true;
+        planeMesh.castShadow = planeMesh.receiveShadow = true;
 
         const groundBody = new CANNON.Body({
             mass: 0,

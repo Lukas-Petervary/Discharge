@@ -1,7 +1,10 @@
+import * as THREE from "three";
+
 export class PhysicsMesh {
     constructor(body, mesh, addCallback, updateCallback) {
         this.body = body;
         this.mesh = mesh;
+        this.uuid = mesh.uuid;
         this.addCallback = addCallback;
         this.updateCallback = updateCallback;
     }
@@ -17,7 +20,14 @@ export class PhysicsMesh {
     update() {
         if (this.updateCallback)
             this.updateCallback(this.body, this.mesh);
-        this.mesh.position.copy(this.body.position);
-        this.mesh.quaternion.copy(this.body.quaternion);
+        this.mesh.position.copy( _pos(this.body.position) );
+        this.mesh.quaternion.copy( _quat(this.body.quaternion) );
     }
+}
+
+function _pos(pos) {
+    return new THREE.Vector3(pos.x, pos.y, pos.z);
+}
+function _quat(quat) {
+    return new THREE.Quaternion(quat.x, quat.y, quat.z, quat.w);
 }

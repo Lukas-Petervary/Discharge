@@ -4,7 +4,7 @@ export class Renderer {
     constructor() {
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        this.sceneRenderer = new THREE.WebGLRenderer({ antialias: true });
+        this.sceneRenderer = new THREE.WebGLRenderer({ canvas: document.getElementById('game-canvas'), antialias: true });
 
         this.objects = [];
         this.skybox = null;
@@ -47,16 +47,16 @@ export class Renderer {
         this.skybox = new THREE.Mesh(skyGeometry, skyMaterial);
 
         // Ensure the skybox is rendered on the inside of the sphere
-      
+
         this.scene.add(this.skybox);
     }
 
     updateSkyboxPosition() {
       if(this.skybox)
-        this.skybox.position.copy(this.camera.position);
+          this.skybox.position.copy(this.camera.position);
     }
   
-    render() {
+    render(dt) {
         this.updateSkyboxPosition();
         this.sceneRenderer.render(this.scene, this.camera);
     }

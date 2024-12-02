@@ -101,8 +101,8 @@ export class AudioManager {
     }
 
     pushPlayerPosition() {
-        const playerPosition = g_MainPlayer.playerBody.body.position.clone();
-        const playerQuaternion = g_MainPlayer.playerBody.body.quaternion.clone();
+        const playerPosition = g_Client.playerBody.body.position.clone();
+        const playerQuaternion = g_Client.playerBody.body.quaternion.clone();
 
         // Convert Cannon.js position and quaternion to suitable format
         const position = {

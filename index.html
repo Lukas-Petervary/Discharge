@@ -10,12 +10,16 @@
         <script type="importmap">
             {
                 "imports": {
-                    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js",
+                    "three": "https://cdn.jsdelivr.net/npm/three@0.171.0/build/three.module.min.js",
+                    "three/examples/jsm/controls/PointerLockControls": "https://cdn.jsdelivr.net/npm/three@0.171.0/examples/jsm/controls/PointerLockControls.js",
                     "cannon": "https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js"
                 }
             }
         </script>
         <script src="https://cdn.jsdelivr.net/npm/peerjs@1.3.2/dist/peerjs.min.js"></script>
+        <style>
+
+        </style>
     </head>
     <body>
         <div id="loading-screen">
@@ -24,19 +28,36 @@
             <script src="index.js"></script>
         </div>
 
-        <div id="custom-cursor"></div>
+        <canvas id="game-canvas"></canvas>
 
         <div id="menu-container">
             <div id="start-menu" class="overlay">
-                <button id="main-play-button" onclick="g_Menu.hideAllMenus(); startGameLoop()">Play Game</button>
-                <button id="create-lobby-button">Create Lobby</button>
-                <button id="join-lobby-button">Join Lobby</button>
+                <span id="connection-id-span">_ID: |<button id="connection-id"></button></span>
+                <div id="name-input-container">
+                    <p>Name |</p>
+                    <input type="text" id="player-name" placeholder="_"/>
+                </div>
+                <span id="connection-widgets">
+                    <button id="create-connection-id" onclick="g_ConnectionManager.openConnection()"><\Connect></button>
+                    <div id="error-icon" style="display: none;">i<span class="tooltip-text" id="error-tooltip"></span></div>
+                </span>
+                <div id="lobby-container">
+                    <div id="lobby-title" class="lobby-leader">Lobby</div>
+                    <span id="lobby-join">
+                        <input type="text" id="join-player-name" placeholder="Player Name">
+                        <input type="text" id="join-player-id" placeholder="Player ID">
+                        <button onclick="g_Lobby.joinPeer()">Join</button>
+                    </span>
+                    <ul id="lobby-connections"></ul>
+                </div>
+
+                <button id="main-play-button" onclick="g_Lobby.startGame()">Start Game</button>
             </div>
 
             <div id="pause-menu" class="overlay">
                 <button id="back-button" onclick="g_Menu.hideAllMenus()">Back to Game</button>
                 <button onclick="g_Menu.showMenu('settings-menu')">Settings</button>
-                <button onclick="g_Menu.showMenu('start-menu')">Exit to Menu</button>
+                <button onclick="g_Menu.showMenu('start-menu'); g_Menu.menuStack = [g_Menu.menuStack[1]]">Exit to Menu</button>
             </div>
 
             <div id="settings-menu" class="overlay">
@@ -50,7 +71,10 @@
             </div>
             <div id="controls-menu" class="overlay">
                 <div id="controls-menu-content"></div>
-                <button onclick="g_Controls.saveKeybinds()">Save Keybinds</button>
+                <span>
+                    <button onclick="g_Controls.exportSettings()">Save Keybinds</button>
+                    <button onclick="ControlsMenu_resetKeys()">Reset Keybinds</button>
+                </span>
                 <button onclick="g_Menu.displayPrevMenu()">Back</button>
             </div>
         </div>

@@ -2,12 +2,23 @@ export class ControlsMenu {
     constructor() {
         this.menuElement = document.getElementById('controls-menu-content');
         this.activeKeybind = null;
+
+        window.ControlsMenu_resetKeys = () => {
+            delete g_Controls.keybindManager.keybindArray;
+            g_Controls.keybindManager.keybindArray = [];
+            g_Controls.keybindManager.rebuildMap();
+
+            localStorage.setItem('keybinds', null);
+            g_Controls.initializeKeybinds();
+            this.renderMenu();
+        }
     }
 
     renderMenu() {
         this.menuElement.innerHTML = '';
 
-        g_KeybindManager.keybindArray.forEach((keybind) => {
+        for(const keymapKey in g_Controls) {
+            if (g_Controls[keymapKey].keybind === undefined) continue;
             const row = document.createElement('div');
             row.className = 'keybind-row';
 
@@ -15,44 +26,44 @@ export class ControlsMenu {
             keybindContainer.className = 'keybind-container';
 
             const label = document.createElement('span');
-            label.textContent = Lang.translate(keybind.tag);
+            label.textContent = keymapKey;
             label.className = 'keybind-label';
             keybindContainer.appendChild(label);
 
-            keybind.keys.forEach((key) => {
+            g_Controls[keymapKey].keybind.keys.forEach((key) => {
                 const keyBox = document.createElement('div');
                 keyBox.className = 'keybox';
                 keyBox.textContent = `'${key}'`;
-                keyBox.dataset.key = key;  // Store the key value for reference
-                keyBox.addEventListener('click', () => this.startRebinding(keybind, keyBox));
+                keyBox.dataset.key = key;
+                keyBox.addEventListener('click', (e) => this.startRebinding(e, keymapKey, keyBox));
                 keybindContainer.appendChild(keyBox);
             });
 
             const addButton = document.createElement('button');
-            addButton.textContent = Lang.translate('menu.keybinds.add_key');
-            addButton.addEventListener('click', () => this.startAddingKey(keybind));
+            addButton.textContent = "+ Add Key";
+            addButton.addEventListener('click', (e) => this.startAddingKey(e, keymapKey));
             keybindContainer.appendChild(addButton);
 
             row.appendChild(keybindContainer);
             this.menuElement.appendChild(row);
-        });
+        }
     }
 
     handleKeyDown(event) {
         if (this.activeKeybind) {
-            const { keybind, keyBox } = this.activeKeybind;
+            const { keymapKey, keyBox } = this.activeKeybind;
             const newKey = event.key === 'Escape' ? null : event.key;
-            g_KeybindManager.changeKey(keybind.tag, newKey, keyBox.dataset.key);
+            g_Controls.changeKey(keymapKey, newKey, keyBox.dataset.key);
 
             this.cleanup();
         } else {
             const addingButton = document.querySelector('.adding');
             if (addingButton) {
                 const keybindTag = addingButton.dataset.keybindTag;
-                const keybind = g_KeybindManager.keybindArray.find(kb => kb.tag === keybindTag);
+                const keybind = g_Controls[keybindTag].keybind;
                 if (keybind && !keybind.keys.includes(event.key)) {
-                    g_KeybindManager.changeKey(keybind.tag, event.key);
-                    addingButton.textContent = Lang.translate('menu.keybinds.add_key');
+                    g_Controls.changeKey(keybindTag, event.key);
+                    addingButton.textContent = "+ Add Key";
                     addingButton.classList.remove('adding');
                 }
                 this.cleanup();
@@ -66,19 +77,19 @@ export class ControlsMenu {
         this.renderMenu();
     }
 
-    startRebinding(keybind, keyBox) {
-        keyBox.textContent = Lang.translate('menu.keybinds.press_key');
+    startRebinding(e, keymapKey, keyBox) {
+        keyBox.textContent = "[Press Key]";
         keyBox.classList.add('rebinding');
-        this.activeKeybind = { keybind, keyBox };
+        this.activeKeybind = { keymapKey, keyBox };
 
         document.addEventListener('keydown', this.handleKeyDown.bind(this));
     }
 
-    startAddingKey(keybind) {
-        const addButton = event.currentTarget;
-        addButton.textContent = Lang.translate('menu.keybinds.press_key');
+    startAddingKey(e, keymapKey) {
+        const addButton = e.currentTarget;
+        addButton.textContent = "[Press Key]";
         addButton.classList.add('adding');
-        addButton.dataset.keybindTag = keybind.tag;
+        addButton.dataset.keybindTag = keymapKey;
 
         document.addEventListener('keydown', this.handleKeyDown.bind(this));
     }

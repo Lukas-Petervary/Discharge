@@ -1,25 +1,49 @@
 import * as CANNON from 'cannon';
 import * as THREE from 'three';
 import { PhysicsMesh } from "../../render/PhysicsMesh.js";
+import {ClientPlayer} from "./ClientPlayer.js";
 
 const height = 2;
 const radius = 0.75;
 const crouchHeight = 1;
 
-export class PlayerBody {
-    constructor() {
-        this.playerMaterial = new CANNON.Material('player');
-        g_world.world.addContactMaterial(
-            new CANNON.ContactMaterial(this.playerMaterial, g_world.groundMaterial, {
-                friction: 0,
-                restitution: 0.1
-            })
-        );
+export class PlayerBody extends PhysicsMesh {
+    constructor(name) {
+        const body = PlayerBody.Body_();
+        const nametag = PlayerBody.Nametag_(name);
+        const mesh = PlayerBody.Mesh_();
 
-        // Cannon capsule object
+        if (nametag) {
+            nametag.position.copy(mesh.position);
+            nametag.position.y += height;
+            mesh.add(nametag);
+        }
+
+
+        // Integrate callbacks for physics
+        const contactNormal = new CANNON.Vec3();
+        const upAxis = new CANNON.Vec3(0, 1, 0);
+        const addEventListeners = (body) => {
+            body.addEventListener("collide", (e) => {
+                let contact = e.contact;
+
+                contact.bi.id === body.id ? contact.ni.negate(contactNormal) : contactNormal.copy(contact.ni);
+
+                if (contactNormal.dot(upAxis) > 0.5) {
+                    g_Client.canJump = true;
+                }
+            });
+        };
+
+        // Create Physics Object
+        super(body, mesh, addEventListeners);
+        this.add();
+    }
+
+    static Body_() {
         const capsuleBody = new CANNON.Body({
             mass: 1,
-            material: this.playerMaterial,
+            material: g_world.playerMaterial,
             fixedRotation: true,
             linearDamping: 0.9,
         });
@@ -35,7 +59,10 @@ export class PlayerBody {
         const B_sphereBottom = new CANNON.Sphere(radius);
         capsuleBody.addShape(B_sphereBottom, new CANNON.Vec3(0, -height / 2 + radius, 0));
 
-        // Three.js capsule mesh
+        return capsuleBody;
+    }
+
+    static Mesh_() {
         const texture = new THREE.TextureLoader().load('../../assets/terrain/Skyboxes/SkySkybox.png');
         const capsuleMaterial = new THREE.MeshPhongMaterial({ map: texture });
 
@@ -55,27 +82,37 @@ export class PlayerBody {
         playerMesh.add(cylinderMesh);
         playerMesh.add(topSphereMesh);
         playerMesh.add(bottomSphereMesh);
-        playerMesh.castShadow = true;
+        playerMesh.receiveShadow = playerMesh.castShadow = true;
 
-        // Integrate callbacks for physics
-        const contactNormal = new CANNON.Vec3();
-        const upAxis = new CANNON.Vec3(0, 1, 0);
+        return playerMesh;
+    }
 
-        const addEventListeners = (body) => {
-            body.addEventListener("collide", (e) => {
-                let contact = e.contact;
+    static Nametag_(name) {
+        if (!name) return null;
 
-                contact.bi.id === body.id ? contact.ni.negate(contactNormal) : contactNormal.copy(contact.ni);
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
 
-                if (contactNormal.dot(upAxis) > 0.5) {
-                    g_MainPlayer.canJump = true;
-                }
-            });
-        };
+        const fontSize = 200;
 
-        // Create Physics Object
-        this.physicsMesh = new PhysicsMesh(capsuleBody, playerMesh, addEventListeners.bind(this));
-        this.physicsMesh.add();
-        return this.physicsMesh;
+        canvas.width = name.length * fontSize + 20;
+        canvas.height = fontSize + 20;
+        context.font = `${fontSize}px 'JetBrains Mono', monospace`;
+
+        context.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.fillStyle = 'white';
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        context.fillText(name, canvas.width / 2, canvas.height / 2);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+        const sprite = new THREE.Sprite(spriteMaterial);
+
+        const aspectRatio = canvas.width / canvas.height;
+        sprite.scale.set(aspectRatio / 2, 0.5, 1);
+
+        return sprite;
     }
 }

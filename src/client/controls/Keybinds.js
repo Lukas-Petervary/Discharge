@@ -1,104 +1,39 @@
-class Keybind {
-    constructor(tag, keys = [], caseSensitive) {
-        this.tag = tag;
-        this.keys = keys;
-        this.caseSensitive = caseSensitive;
+import {CameraControls} from "./CameraControls.js";
 
-        this.press = [];
-        this.hold = [];
-        this.release = [];
-        this.isPressed = false;
-    }
-
-    containsFunc(func, list) {
-        return list.includes(func);
-    }
-
-    onPress(func) {
-        if (!this.containsFunc(func, this.press)) this.press.push(func);
-    }
-
-    onHold(func) {
-        if (!this.containsFunc(func, this.hold)) this.hold.push(func);
-    }
-
-    onRelease(func) {
-        if (!this.containsFunc(func, this.release)) this.release.push(func);
-    }
-
-    executeFunctions(list) {
-        for (const lambda of list)
-            lambda();
-    }
-
-    toJSON() {
-        return {
-            tag: this.tag,
-            keys: this.keys,
-            caseSensitive: this.caseSensitive,
-            press: this.press.map(func => func.toString()),
-            hold: this.hold.map(func => func.toString()),
-            release: this.release.map(func => func.toString())
-        };
-    }
-
-    static fromJSON(data) {
-        const keybind = new Keybind(data.tag, data.keys, data.caseSensitive);
-        keybind.press = data.press.map(str => new Function('return ' + str)()); // Convert string back to function
-        keybind.hold = data.hold.map(str => new Function('return ' + str)());
-        keybind.release = data.release.map(str => new Function('return ' + str)());
-        return keybind;
-    }
-}
-
-export class KeybindManager {
+class KeybindManager {
     constructor() {
         this.keybindArray = [];
-        this.keybinds = {};
-        this.keysPressed = [];
-        this.init();
-    }
-
-    init() {
+        this.keyMap = {};
         document.addEventListener('keydown', (e) => this.onKeyDown(e));
         document.addEventListener('keyup', (e) => this.onKeyUp(e));
     }
 
-    registerKeybind(tag, keys, caseSensitive = true) {
-        const keybind = new Keybind(tag, keys, caseSensitive);
+    clear() {
+        delete this.keybindArray;
+        this.keybindArray = [];
+        delete this.keyMap;
+        this.keyMap = {};
+    }
+
+    registerKeybind(keys, caseSensitive) {
+        const keybind = {keys: keys, caseSensitive: caseSensitive, isPressed: false, duration: 0};
         this.keybindArray.push(keybind);
         for (const key of keybind.keys) {
-            if (!this.keybinds[key]) {
-                this.keybinds[key] = [];
-            }
-            this.keybinds[key].push(keybind);
+            if (!this.keyMap[key])
+                this.keyMap[key] = [];
+            this.keyMap[key].push(keybind);
         }
         return keybind;
     }
 
-    changeKey(tag, newKey, oldKey = null) {
-        const index = this.keybindArray.findIndex(kb => kb.tag === tag);
-        if (index === -1) {
-            console.error(`No keybind found with tag: ${tag}`);
-            return;
-        }
-        const keybind = this.keybindArray[index];
-        if (oldKey)
-            keybind.keys = keybind.keys.filter(k => k !== oldKey);
-        if (newKey && !keybind.keys.includes(newKey))
-            keybind.keys.push(newKey);
-
-        this.rebuildMap();
-    }
-
     rebuildMap() {
-        delete this.keybinds;
-        this.keybinds = {};
+        delete this.keyMap;
+        this.keyMap = {};
         for (const keybind of this.keybindArray) {
             for (const key of keybind.keys) {
-                if (!this.keybinds[key])
-                    this.keybinds[key] = [];
-                this.keybinds[key].push(keybind);
+                if (!this.keyMap[key])
+                    this.keyMap[key] = [];
+                this.keyMap[key].push(keybind);
             }
         }
     }
@@ -107,23 +42,25 @@ export class KeybindManager {
         if (g_Menu.menus['controls-menu'].isDisplayed) return;
 
         const key = e.key;
-        const keybinds = this.keybinds[key];
+        const keybinds = this.keyMap[key];
         if (keybinds) {
             for (const keybind of keybinds) {
                 if (!keybind.isPressed) {
                     keybind.isPressed = true;
-                    keybind.executeFunctions(keybind.press);
+                } else {
+                    keybind.duration = 0;
                 }
             }
         }
 
         if (key === key.toLowerCase()) return;
-        const altKeys = this.keybinds[key.toLowerCase()];
+        const altKeys = this.keyMap[key.toLowerCase()];
         if (altKeys) {
             for (const keybind of altKeys) {
                 if (!keybind.isPressed && !keybind.caseSensitive) {
                     keybind.isPressed = true;
-                    keybind.executeFunctions(keybind.press);
+                } else {
+                    keybind.duration = 0;
                 }
             }
         }
@@ -133,87 +70,118 @@ export class KeybindManager {
         if (g_Menu.menus['controls-menu'].isDisplayed) return;
 
         const key = e.key;
-        const keybinds = this.keybinds[key];
+        const keybinds = this.keyMap[key];
         if (keybinds) {
             for (const keybind of keybinds) {
                 if (keybind.isPressed) {
                     keybind.isPressed = false;
-                    keybind.executeFunctions(keybind.release);
                 }
             }
         }
 
         if (key === key.toLowerCase()) return;
-        const altKeys = this.keybinds[key.toLowerCase()];
+        const altKeys = this.keyMap[key.toLowerCase()];
         if (altKeys) {
             for (const keybind of altKeys) {
                 if (keybind.isPressed && !keybind.caseSensitive) {
                     keybind.isPressed = false;
-                    keybind.executeFunctions(keybind.release);
                 }
             }
         }
     }
+}
 
-    update() {
-        for (const key in this.keybinds) {
-            const keybind = this.keybinds[key];
-            if (keybind.isPressed) {
-                keybind.executeFunctions(keybind.hold);
+export const Controls = {
+    createKeybind(keys, caseSensitive = false, onPressCallback, onHoldCallback, onReleaseCallback) {
+        return {
+            keybind: this.keybindManager.registerKeybind(keys, caseSensitive),
+            onPress: onPressCallback,
+            onHold: onHoldCallback,
+            onRelease: onReleaseCallback,
+            isPressed() {
+                return this.keybind.isPressed;
+            }
+        };
+    },
+    changeKey(tag, newKey, oldKey = null) {
+        const keybind = this[tag].keybind;
+        if (!keybind) throw new Error(`Unknown keybind with tag=${tag}`);
+        if (oldKey)
+            keybind.keys = keybind.keys.filter(k => k !== oldKey);
+        if (newKey && !keybind.keys.includes(newKey))
+            keybind.keys.push(newKey);
+        this.keybindManager.rebuildMap();
+    },
+    importSettings(json) {
+        try {
+            const settings = JSON.parse(json);
+            for (const tag in settings) {
+                if (this[tag] && this[tag].keybind) {
+                    const keybind = this[tag].keybind;
+                    keybind.keys = settings[tag];
+                }
+            }
+            this.keybindManager.rebuildMap();
+        } catch (e) {
+            console.error("Failed to import keybind settings:", e);
+        }
+    },
+    exportSettings() {
+        const settings = {};
+        for (const key in this) {
+            if (this[key].keybind && this[key].keybind.keys) {
+                settings[key] = this[key].keybind.keys; // Export tag and keys only
             }
         }
-    }
-
-
-}
-
-export class Controls {
-    constructor() {
-        const keybindsJSON = localStorage.getItem('keybinds');
-        if (keybindsJSON) {
-            this.loadKeybinds(keybindsJSON);
-        } else {
-            this.defaultKeybinds();
-            this.saveKeybinds();
+        localStorage.setItem('keybinds', JSON.stringify(settings));
+        return JSON.stringify(settings); // Convert settings to JSON for saving
+    },
+    update() {
+        for (const key in this) {
+            const kb = this[key];
+            if (kb.keybind && kb.keybind.isPressed !== undefined) {
+                if (kb.keybind.isPressed) {
+                    if (kb.keybind.duration === 0 && kb.onPress) kb.onPress();
+                    else if (kb.onHold) kb.onHold();
+                    kb.keybind.duration++;
+                } else if (kb.keybind.duration !== 0) {
+                    if (kb.onRelease) kb.onRelease();
+                    kb.keybind.duration = 0;
+                }
+            }
         }
-    }
+    },
 
-    saveKeybinds() {
-        const uniqueKeybindsMap = new Map();
-        for (const keybind of g_KeybindManager.keybindArray) {
-            uniqueKeybindsMap.set(keybind.tag, keybind.toJSON());
-        }
-        const uniqueKeybindsData = Array.from(uniqueKeybindsMap.values());
-        localStorage.setItem('keybinds', JSON.stringify(uniqueKeybindsData));
-    }
+    keybindManager: new KeybindManager(),
+    cameraControls: new CameraControls(),
 
-    loadKeybinds(keybindsJSON) {
-        if (keybindsJSON) {
-            const keybindsData = JSON.parse(keybindsJSON);
-            g_KeybindManager.keybindArray = keybindsData.map(data => Keybind.fromJSON(data));
-            g_KeybindManager.rebuildMap();
-        }
-    }
+    initializeKeybinds() {
+        this.forward = this.createKeybind(['w']);
+        this.backward = this.createKeybind(['s']);
+        this.left = this.createKeybind(['a']);
+        this.right = this.createKeybind(['d']);
+        this.sprint = this.createKeybind(['Shift']);
+        this.jump = this.createKeybind([' ']);
 
-    of(tag) {
-        const kb = g_KeybindManager.keybindArray.find(k => k.tag === tag);
-        if (kb) return kb;
-        throw new Error(`Keybind of ID "${tag}" not found.`);
-    }
+        this['third person'] = this.createKeybind(['F4'], false, () => g_Client.firstPerson = !g_Client.firstPerson);
+        this['lean left'] = this.createKeybind(['q']);
+        this['lean right'] = this.createKeybind(['e']);
 
-    defaultKeybinds() {
-        g_KeybindManager.registerKeybind('key.movement.forward', ['w'], false);
-        g_KeybindManager.registerKeybind('key.movement.backward', ['s'], false);
-        g_KeybindManager.registerKeybind('key.movement.left', ['a'], false);
-        g_KeybindManager.registerKeybind('key.movement.right', ['d'], false);
-
-        g_KeybindManager.registerKeybind('key.movement.sprint', ['Shift']);
-        g_KeybindManager.registerKeybind('key.movement.crouch', ['c'], false)
-        g_KeybindManager.registerKeybind('key.movement.jump', [' ']);
-
-        g_KeybindManager.registerKeybind('key.camera.third_person', ['F4']);
-        g_KeybindManager.registerKeybind('key.menu.back', ['Escape']).onPress(() => {
-            g_Menu.displayPrevMenu();
+        this['back menu'] = this.createKeybind(['Escape'], false, () => {
+            const duration = g_Menu.currentMenu() === g_Menu.pauseMenu ? 200 : 0
+            setTimeout(() => {
+                const menusOpen = g_Menu.menuStack.length;
+                if (menusOpen > 0) {
+                    g_Menu.displayPrevMenu();
+                } else if (!g_Controls.cameraControls.isLocked) {
+                    g_Menu.showMenu('pause-menu');
+                }
+            }, duration);
         });
+
+        const savedKeybinds = localStorage.getItem('keybinds');
+        if (savedKeybinds) this.importSettings(savedKeybinds);
     }
-}
+};
+
+Controls.initializeKeybinds();
