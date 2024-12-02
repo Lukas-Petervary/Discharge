@@ -195,7 +195,11 @@ export class StartGamePacket extends GenericPacket {
         };
     }
 
-    static handleStartGame(packet) {
+    static handleStartGame(packet, senderID) {
+        if (senderID !== g_Lobby.leader) {
+            console.error('Non-leader tried to initiate game')
+            return;
+        }
         g_Menu.hideAllMenus();
         startGameLoop();
         g_ConnectionManager.broadcastPacket(new JoinGamePacket(packet));

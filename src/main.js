@@ -7,7 +7,7 @@ import { MenuRegistry } from "./overlay/MenuRegistry.js";
 import { AudioManager } from "./client/audio/AudioManager.js";
 import { Controls } from "./client/controls/Keybinds.js";
 import { Stats } from "./overlay/Stats.js";
-import { Lobby } from "./networking/Lobby.js";
+import { Server } from "./networking/Server.js";
 
 async function init() {
     window.g_AudioManager = new AudioManager();
@@ -21,7 +21,7 @@ async function init() {
     window.g_Controls = Controls;
     window.g_Client = new ClientPlayer();
     window.g_ConnectionManager = new ConnectionManager();
-    window.g_Lobby = new Lobby();
+    window.g_Lobby = new Server();
 
     window.runtimeStats = new Stats();
 

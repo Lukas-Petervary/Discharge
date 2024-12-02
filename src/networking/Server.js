@@ -1,7 +1,7 @@
 import {JoinGamePacket, KickPlayerPacket, LobbyReadyPacket, StartGamePacket} from "./Packets.js";
 import {PlayerBody} from "../client/player/PlayerBody.js";
 
-export class Lobby {
+export class Server {
     constructor() {
         this.leader = g_ConnectionManager.peerId;
         this.lobbyReadied = false;
@@ -97,6 +97,13 @@ export class Lobby {
 
     readyButton() {
         this.lobbyReadied = !this.lobbyReadied;
+
+        if (this.lobbyReadied) {
+            document.getElementById('lobby-title').classList.add("lobby-ready");
+        } else {
+            document.getElementById('lobby-title').classList.remove("lobby-ready");
+        }
+
         g_ConnectionManager.broadcastPacket(new LobbyReadyPacket(this.lobbyReadied));
     }
 
