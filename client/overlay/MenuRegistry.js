@@ -1,4 +1,4 @@
-import {ControlsMenu} from "../client/controls/ControlsMenu.js";
+import {ControlsMenu} from "../player/controls/ControlsMenu.js";
 
 export class MenuRegistry {
     constructor() {

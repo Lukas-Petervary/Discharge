@@ -1,27 +1,32 @@
-import ConnectionManager from './networking/ConnectionManager.js';
-import * as THREE from 'three';
+import ClientConnection from './networking/ClientConnection.js';
+import * as THREE from "three";
 import { Renderer } from "./render/Renderer.js";
 import { World } from "./render/World.js";
-import { ClientPlayer } from "./client/player/ClientPlayer.js";
+import { ClientPlayer } from "./player/ClientPlayer.js";
 import { MenuRegistry } from "./overlay/MenuRegistry.js";
-import { AudioManager } from "./client/audio/AudioManager.js";
-import { Controls } from "./client/controls/Keybinds.js";
+import { Controls } from "./player/controls/Keybinds.js";
 import { Stats } from "./overlay/Stats.js";
-import { Server } from "./networking/Server.js";
+import { Lobby } from "./networking/Lobby.js";
+import { MeshDelivery } from "./render/mesh/MeshDelivery.js";
+import { LightMesh } from "./render/mesh/LightMesh.js";
+import {AudioHandler} from "./player/audio/AudioHandler.js";
 
 async function init() {
-    window.g_AudioManager = new AudioManager();
-    g_AudioManager.init();
-
     window.g_Menu = new MenuRegistry();
+
+    window.g_FBXDelivery = new MeshDelivery();
+    await g_FBXDelivery.init();
 
     window.g_renderer = new Renderer();
     window.g_world = new World();
 
+    window.g_AudioManager = new AudioHandler(g_renderer.camera);
+    await g_AudioManager.init();
+
     window.g_Controls = Controls;
     window.g_Client = new ClientPlayer();
-    window.g_ConnectionManager = new ConnectionManager();
-    window.g_Lobby = new Server();
+    window.g_ClientConnection = new ClientConnection();
+    window.g_Lobby = new Lobby();
 
     window.runtimeStats = new Stats();
 
@@ -38,6 +43,10 @@ async function init() {
         console.trace = _originalTrace;
         console.log("%c! DEBUG MODE ENABLED !", "background: yellow; color: black; font-size: 200%;")
     }
+
+    enableDebug()
+
+    window.dispatchEvent(new CustomEvent("finishgameload"));
 }
 
 function onStart() {
@@ -49,8 +58,12 @@ function onStart() {
 
     g_Menu.showMenu('start-menu');
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1);
-    g_renderer.scene.add(ambientLight);
+    g_renderer.scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+    const callback = (light) => {
+        light.castShadow = true;
+        light.position.set(5, 5, 5);
+    }
+    const directionalLight = new LightMesh(new THREE.DirectionalLight(0xffffff, 3), {addCallback: callback}).add();
 
     window.addEventListener('beforeunload', (event) => {
         event.preventDefault();
@@ -59,48 +72,37 @@ function onStart() {
          * Pop-up to download persistent data in json file
          */
     })
-    window.addEventListener('unload', () => g_ConnectionManager.peer.destroy());
+    window.addEventListener('unload', () => g_ClientConnection.peer.destroy());
 }
 
 function render(dt) {
-    g_Client.moveCamera();
     g_renderer.render(dt);
+    g_Client.moveCamera();
 }
 
-let prevT = 0;
-const fixedTimeStep = 1000 / 60;
-let accumulator = 0;
 let running = false;
-
-function gameLoop(t) {
-    if (!running) return;
+function gameLoop() {
+    if (running) requestAnimationFrame(gameLoop);
 
     runtimeStats.begin();
-    const dt = t - prevT;
-    prevT = t;
-    accumulator += dt;
+    g_renderer.time.deltaTime = g_renderer.clock.getDelta();
+    g_renderer.time.subTickTime += g_renderer.time.deltaTime;
 
-    while (accumulator >= fixedTimeStep) {
+    while (g_renderer.time.subTickTime >= g_world.TICK_RATE) {
         g_Controls.update();
-        if(g_Controls.cameraControls.isEnabled) {
-            g_Client.move();
-        }
-        g_AudioManager.pushPlayerPosition();
-        g_world.step(fixedTimeStep);
+        g_Client.move();
 
-        accumulator -= fixedTimeStep;
+        g_world.step(g_world.TICK_RATE);
+        g_renderer.time.subTickTime -= g_world.TICK_RATE;
     }
 
-    const interpolation = accumulator / fixedTimeStep;
-    render(interpolation);
+    render(g_renderer.time.deltaTime);
     runtimeStats.end();
-
-    requestAnimationFrame(gameLoop);
 }
 
 await init().then(() => {
     console.log('Finished initializing');
-    window.startGameLoop = () => {
+    window.toggleGameLoop = () => {
         if (!running) {
             running = true;
             requestAnimationFrame(gameLoop);

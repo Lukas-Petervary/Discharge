@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discharge Host</title>
+
+    <link rel="stylesheet" href="host_styles.css">
+
+    <script type="importmap">
+        {
+            "imports": {
+                "cannon": "https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js"
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.3.2/dist/peerjs.min.js"></script>
+</head>
+<body data-page="server">
+    <div id="connection-id"></div>
+    <button id="start-button">Start</button>
+
+    <div id="lobby-container">
+        <div id="lobby-title">Lobby</div>
+        <ul id="lobby-connections"></ul>
+    </div>
+
+    <script type="module" src="server/main.js"></script>
+</body>
+</html>

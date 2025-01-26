@@ -1,17 +1,20 @@
 import * as CANNON from 'cannon';
 import * as THREE from 'three';
-import { PhysicsMesh } from './PhysicsMesh.js';
-import * as NULL_SHADER from '../../assets/textures/shaders/nullTexture.js'
+import {PhysicsMesh} from './mesh/PhysicsMesh.js';
+import {AnimatedMesh} from "./mesh/AnimatedMesh.js";
+import {LightMesh} from "./mesh/LightMesh.js";
 
 export class World {
     constructor() {
+        this.TICK_RATE = 1/60;
+
         this.world = new CANNON.World();
         this.world.gravity.set(0, -9.82, 0);
         this.objects = [];
+
         this.world.broadphase = new CANNON.NaiveBroadphase();
         this.world.solver.iterations = 10;
 
-        // Materials
         this.initMaterials();
     }
 
@@ -23,18 +26,22 @@ export class World {
         this.world.addContactMaterial(
             new CANNON.ContactMaterial(this.playerMaterial, this.groundMaterial, {
                 friction: 0,
-                restitution: 0.1
+                restitution: 0
             })
         );
         this.world.addContactMaterial(
             new CANNON.ContactMaterial(this.defaultMaterial, this.groundMaterial, {
-                friction: 0,
-                restitution: 0,
+                friction: 1,
+                restitution: 0.5,
             })
         );
+
+        this.collisionGroups = {};
+        this.collisionGroups['client'] = 1<<1;
+        this.collisionGroups['player'] = 1<<2;
     }
 
-    addSphere(radius, position) {
+    addSphere(radius, position = {x:0,y:0,z:0}) {
         // Cannon.js sphere
         const sphereShape = new CANNON.Sphere(radius);
         const sphereBody = new CANNON.Body({
@@ -45,8 +52,10 @@ export class World {
         });
 
         // Three.js sphere
-        const sphereGeometry = new THREE.SphereGeometry(radius, 32, 32);
-        const sphereMesh = new THREE.Mesh(sphereGeometry, NULL_SHADER.shaderMaterial);
+        const sphereMesh = new THREE.Mesh(
+            new THREE.SphereGeometry(radius, 32, 32),
+            new THREE.MeshStandardMaterial({ color: 0xff0000 })
+        );
         sphereMesh.castShadow = sphereMesh.receiveShadow = true;
 
         // Create PhysicsObject
@@ -55,12 +64,32 @@ export class World {
         return physicsObject;
     }
 
+    addModel(name, position = {x: 0, y: 1, z: 0}) {
+        const sphereShape = new CANNON.Sphere(1);
+        const sphereBody = new CANNON.Body({
+            mass: 1,
+            position: new CANNON.Vec3(position.x, position.y, position.z),
+            shape: sphereShape,
+            material: this.defaultMaterial,
+        });
+
+        const init = (body, mesh) => {
+            mesh.position.set(position.x, position.y, position.z);
+            mesh.scale.copy(new THREE.Vector3(0.01, 0.01, 0.01));
+        }
+
+        const physMesh = new AnimatedMesh(sphereBody, 'dance', {addCallback: init});
+        physMesh.add();
+        return physMesh;
+    }
+
     addPlane(pos = new CANNON.Vec3(0,0,0)) {
-        const planeGeometry = new THREE.PlaneGeometry(100, 100);  // 100x100 units
-        const planeMaterial = new THREE.MeshBasicMaterial({ color: 0x999999, side: THREE.DoubleSide });
-        const planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
+        const planeMesh = new THREE.Mesh(
+            new THREE.PlaneGeometry(100, 100),
+            new THREE.MeshStandardMaterial({ color: 0x999999, side: THREE.DoubleSide })
+        );
         planeMesh.rotation.x = -Math.PI / 2;
-        planeMesh.castShadow = planeMesh.receiveShadow = true;
+        planeMesh.receiveShadow = true;
 
         const groundBody = new CANNON.Body({
             mass: 0,
@@ -110,7 +139,7 @@ export class World {
 
 
                             // Store reference to the mesh and Cannon.js body for later use
-                            g_renderer.objects.push({
+                            g_world.objects.push({
                                 mesh: child,
                                 body: body,
                             });
@@ -178,9 +207,7 @@ export class World {
             const indices = geom.index.array;
 
             // Create Cannon.js Trimesh
-            const cannonShape = new CANNON.Trimesh(vertices, indices);
-
-            return cannonShape;
+            return new CANNON.Trimesh(vertices, indices);
 
         } catch (error) {
             console.error('Error creating Cannon.js shape:', error);
@@ -188,14 +215,30 @@ export class World {
         }
     }
 
-    step() {
-        // Step the physics g_world
-        this.world.step(1 / 60);
+    toggleWireframes() {
+        PhysicsMesh.SHOW_WIREFRAMES = !PhysicsMesh.SHOW_WIREFRAMES;
+        this.objects.forEach(object => {
+            if (!object.body) return;
+            object.body.debugMesh.visible = PhysicsMesh.SHOW_WIREFRAMES;
+        })
+    }
 
-        // Update Three.js objects based on physics
-        this.objects.forEach(obj => {
-            obj.update();
+    toggleLightDebug() {
+        LightMesh.DEBUG_LIGHTS = !LightMesh.DEBUG_LIGHTS;
+        this.objects.forEach(object => {
+            if (object instanceof LightMesh)
+                object.mesh.debugVisual.visible = LightMesh.DEBUG_LIGHTS;
+        })
+    }
+
+    step(dt) {
+        this.objects.forEach((obj) => {
+            if (!obj.body) return;
+            obj.body.previousPosition = obj.body.position.clone();
+            obj.body.previousQuaternion = obj.body.quaternion.clone();
         });
+        this.world.step(dt);
+        this.objects.forEach(obj => obj.update());
     }
 }
 

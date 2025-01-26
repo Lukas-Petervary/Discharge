@@ -2,11 +2,17 @@ import * as THREE from 'three';
 
 export class Renderer {
     constructor() {
+        this.clock = new THREE.Clock();
+        this.time = {
+            subTickTime: 0,
+            deltaTime: 0,
+            lastTick: 0
+        };
         this.scene = new THREE.Scene();
+        this.audioListener = new THREE.AudioListener();
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         this.sceneRenderer = new THREE.WebGLRenderer({ canvas: document.getElementById('game-canvas'), antialias: true });
 
-        this.objects = [];
         this.skybox = null;
 
         this.init();
@@ -29,25 +35,17 @@ export class Renderer {
         this.skyBox('SkySkybox.png');
     }
 
-    // Create Skybox
     skyBox(name){
-        //makes the sky Sphere
         const skyGeometry = new THREE.SphereGeometry(1000, 25, 25);
         skyGeometry.scale(-1,1,1);
-        
-        // Load the texture
+
         const texture = new THREE.TextureLoader().load('assets/terrain/Skyboxes/' + name);
 
-        // Create a Phong material for the skybox with the loaded texture
         const skyMaterial = new THREE.MeshPhongMaterial({
             map: texture
         });
 
-        // Create the skybox mesh
         this.skybox = new THREE.Mesh(skyGeometry, skyMaterial);
-
-        // Ensure the skybox is rendered on the inside of the sphere
-
         this.scene.add(this.skybox);
     }
 
@@ -55,9 +53,12 @@ export class Renderer {
       if(this.skybox)
           this.skybox.position.copy(this.camera.position);
     }
-  
+
+
+
     render(dt) {
         this.updateSkyboxPosition();
+        g_world.objects.forEach(obj => obj.render(dt, this.time.subTickTime / g_world.TICK_RATE));
         this.sceneRenderer.render(this.scene, this.camera);
     }
 }

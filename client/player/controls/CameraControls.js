@@ -8,6 +8,8 @@ export class CameraControls {
         this.onCooldown = false;
         this.isEnabled = false;
 
+        this.onLookEvent = [];
+
         this.pitch = 0;
         this.yaw = 0;
         this.lookVec = new THREE.Euler(0, 0, 0);
@@ -75,7 +77,7 @@ export class CameraControls {
             this.isEnabled = false;
             g_Menu.showMenu('pause-menu');
         }
-        console.trace(`PointerLock Error: ${err}`);
+        console.trace(`PointerLock Error:`, err);
     }
 
     _onmousemove(event) {
@@ -88,5 +90,9 @@ export class CameraControls {
         this.pitch = Math.min(MAX_THETA, Math.max(-MAX_THETA, this.pitch));
 
         this.lookVec = new THREE.Euler(this.pitch, this.yaw, 0, 'YXZ');
+
+        for(const callback of this.onLookEvent) {
+            callback(this.pitch, this.yaw, this.lookVec);
+        }
     }
 }

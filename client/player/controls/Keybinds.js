@@ -53,7 +53,7 @@ class KeybindManager {
             }
         }
 
-        if (key === key.toLowerCase()) return;
+        if (!key || key === key.toLowerCase()) return;
         const altKeys = this.keyMap[key.toLowerCase()];
         if (altKeys) {
             for (const keybind of altKeys) {
@@ -79,7 +79,7 @@ class KeybindManager {
             }
         }
 
-        if (key === key.toLowerCase()) return;
+        if (!key || key === key.toLowerCase()) return;
         const altKeys = this.keyMap[key.toLowerCase()];
         if (altKeys) {
             for (const keybind of altKeys) {
@@ -161,6 +161,7 @@ export const Controls = {
         this.left = this.createKeybind(['a']);
         this.right = this.createKeybind(['d']);
         this.sprint = this.createKeybind(['Shift']);
+        this.crouch = this.createKeybind(['c']);
         this.jump = this.createKeybind([' ']);
 
         this['third person'] = this.createKeybind(['F4'], false, () => g_Client.firstPerson = !g_Client.firstPerson);
@@ -178,6 +179,13 @@ export const Controls = {
                 }
             }, duration);
         });
+
+        // this.emote1 = this.createKeybind(['1'], false, () => {
+        //     g_Client.playerBody.playAnimation(0);
+        // });
+        // this.emote2 = this.createKeybind(['2'], false, () => {
+        //     g_Client.playerBody.playAnimation(0, 0.5);
+        // });
 
         const savedKeybinds = localStorage.getItem('keybinds');
         if (savedKeybinds) this.importSettings(savedKeybinds);

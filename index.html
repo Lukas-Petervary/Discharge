@@ -11,16 +11,14 @@
             {
                 "imports": {
                     "three": "https://cdn.jsdelivr.net/npm/three@0.171.0/build/three.module.min.js",
+                    "three/examples/jsm/": "https://cdn.jsdelivr.net/npm/three@0.171.0/examples/jsm/",
                     "cannon": "https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js"
                 }
             }
         </script>
         <script src="https://cdn.jsdelivr.net/npm/peerjs@1.3.2/dist/peerjs.min.js"></script>
-        <style>
-
-        </style>
     </head>
-    <body>
+    <body data-page="client">
         <div id="loading-screen">
             <div id="loading-text">Loading...</div>
             <div id="loading-spinner"></div>
@@ -37,26 +35,25 @@
                     <input type="text" id="player-name" placeholder="_"/>
                 </div>
                 <span id="connection-widgets">
-                    <button id="create-connection-id" onclick="g_ConnectionManager.openConnection()"><\Connect></button>
+                    <button id="create-connection-id" onclick="g_ClientConnection.openConnection()"><\Connect></button>
                     <div id="error-icon" style="display: none;">i<span class="tooltip-text" id="error-tooltip"></span></div>
                 </span>
                 <div id="lobby-container">
-                    <div id="lobby-title" class="lobby-leader">Lobby</div>
+                    <div id="lobby-title">Lobby</div>
                     <span id="lobby-join">
-                        <input type="text" id="join-player-name" placeholder="Player Name">
-                        <input type="text" id="join-player-id" placeholder="Player ID">
-                        <button onclick="g_Lobby.joinPeer()">Join</button>
+                        <input type="text" id="join-server-id" placeholder="Lobby ID" autocomplete="on">
+                        <button onclick="g_ClientConnection.joinServer()">Join</button>
                     </span>
                     <ul id="lobby-connections"></ul>
                 </div>
 
-                <button id="main-play-button" onclick="g_Lobby.startGame()">Start Game</button>
+                <button id="ready-button" onclick="g_Lobby.readyButton()">Ready</button>
             </div>
 
             <div id="pause-menu" class="overlay">
                 <button id="back-button" onclick="g_Menu.hideAllMenus()">Back to Game</button>
                 <button onclick="g_Menu.showMenu('settings-menu')">Settings</button>
-                <button onclick="g_Menu.showMenu('start-menu'); g_Menu.menuStack = [g_Menu.menuStack[1]]">Exit to Menu</button>
+                <button onclick="g_Lobby.stopGame()">Exit to Menu</button>
             </div>
 
             <div id="settings-menu" class="overlay">
@@ -66,6 +63,8 @@
             </div>
             <div id="debug-menu" class="overlay">
                 <button onclick="runtimeStats.dom.style.display = runtimeStats.dom.style.display === 'none' ? 'block' : 'none';">Display Runtime Stats</button>
+                <button onclick="g_world.toggleWireframes()">Toggle Wireframes</button>
+                <button onclick="g_world.toggleLightDebug()">Toggle Debug Lights</button>
                 <button onclick="g_Menu.displayPrevMenu()">Back</button>
             </div>
             <div id="controls-menu" class="overlay">
@@ -78,6 +77,6 @@
             </div>
         </div>
 
-        <script type="module" src="./src/main.js"></script>
+        <script type="module" src="client/main.js"></script>
     </body>
 </html>

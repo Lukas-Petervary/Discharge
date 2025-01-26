@@ -6,11 +6,13 @@ const func = () => {
     const start = () => {
         loadingScreen.style.opacity = "0";
         setTimeout(() => {loadingScreen.remove()}, 1000);
-        window.removeEventListener("load", func);
+        window.removeEventListener("finishgameload", func);
         window.removeEventListener("keydown", start);
+        window.removeEventListener("mousedown", start);
     };
 
     window.addEventListener("keydown", start);
+    window.addEventListener("mousedown", start);
 }
 
-window.addEventListener("load", func);
+window.addEventListener("finishgameload", func);
