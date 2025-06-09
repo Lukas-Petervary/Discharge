@@ -1,4 +1,4 @@
-import {DirectConnectPacket, KickPlayerPacket, PacketManager} from '/shared/PacketService.js';
+import {DirectConnectPacket, KickPlayerPacket, PacketManager} from '../../shared/PacketService.js';
 
 export class ServerConnection {
     constructor() {

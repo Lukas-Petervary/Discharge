@@ -1,4 +1,4 @@
-import {PacketManager, HandshakePacket} from "/shared/PacketService.js";
+import {PacketManager, HandshakePacket} from "../../shared/PacketService.js";
 
 export default class ClientConnection {
     constructor() {

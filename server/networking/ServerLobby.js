@@ -1,4 +1,4 @@
-import {StartGamePacket} from "/shared/PacketService.js";
+import {StartGamePacket} from "../../shared/PacketService.js";
 
 export class ServerLobby {
     constructor() {

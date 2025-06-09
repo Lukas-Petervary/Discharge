@@ -1,7 +1,7 @@
 import * as CANNON from 'cannon';
 import * as THREE from 'three';
 import { PlayerBody } from "./PlayerBody.js";
-import {PositionPacket} from "/shared/PacketService.js";
+import {PositionPacket} from "../../shared/PacketService.js";
 
 const maxWalkSpeed = 5;
 const maxSprintSpeed = 10;
