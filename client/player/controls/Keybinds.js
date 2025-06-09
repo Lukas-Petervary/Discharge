@@ -180,12 +180,12 @@ export const Controls = {
             }, duration);
         });
 
-        // this.emote1 = this.createKeybind(['1'], false, () => {
-        //     g_Client.playerBody.playAnimation(0);
-        // });
-        // this.emote2 = this.createKeybind(['2'], false, () => {
-        //     g_Client.playerBody.playAnimation(0, 0.5);
-        // });
+        this.emote1 = this.createKeybind(['1'], false, () => {
+            g_Client.playerBody.playAnimation(0);
+        });
+        this.emote2 = this.createKeybind(['2'], false, () => {
+            g_Client.playerBody.playAnimation(0, 0.5);
+        });
 
         const savedKeybinds = localStorage.getItem('keybinds');
         if (savedKeybinds) this.importSettings(savedKeybinds);

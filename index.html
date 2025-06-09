@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Discharge</title>
 
-        <link rel="stylesheet" href="styles.css">
+        <link rel="stylesheet" href="client/styles.css">
 
         <script type="importmap">
             {
@@ -39,9 +39,9 @@
                     <div id="error-icon" style="display: none;">i<span class="tooltip-text" id="error-tooltip"></span></div>
                 </span>
                 <div id="lobby-container">
-                    <div id="lobby-title">Lobby</div>
+                    <div id="lobby-title">ServerLobby</div>
                     <span id="lobby-join">
-                        <input type="text" id="join-server-id" placeholder="Lobby ID" autocomplete="on">
+                        <input type="text" id="join-server-id" placeholder="ServerLobby ID" autocomplete="on">
                         <button onclick="g_ClientConnection.joinServer()">Join</button>
                     </span>
                     <ul id="lobby-connections"></ul>

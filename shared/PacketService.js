@@ -1,5 +1,3 @@
-import * as CANNON from 'cannon';
-
 export class PacketManager {
     constructor() {
         this.packetHandlers = {};
@@ -76,7 +74,6 @@ export class HandshakePacket extends GenericPacket {
     }
 
     static S2C(packet, senderID) {
-        console.log(`Handshake inbound from "${senderID}":`, packet)
         for(const playerId of packet.playerList) {
             if (playerId !== g_ClientConnection.peerId)
                 g_Lobby._initPlayer(playerId);
@@ -179,6 +176,10 @@ export class LobbyReadyPacket extends GenericPacket {
         };
     }
 
+    static C2S(packet) {
+        g_ServerLobby.setPlayer(packet.ready);
+    }
+
     static S2C(packet) {
         g_Lobby.players[packet.peer].ready = packet.ready;
         g_Lobby.refreshLobbyUI();
@@ -214,7 +215,7 @@ export class KickPlayerPacket extends GenericPacket {
             alert("You've been kicked from the lobby!");
         } else {
             const _c = g_ClientConnection.connections[packet.kickedPlayer];
-            if (_c) {_c.close();}
+            if (_c) _c.close();
             g_Lobby.onLeave(packet.kickedPlayer);
             g_Lobby.refreshLobbyUI();
         }
@@ -242,7 +243,7 @@ export class StartGamePacket extends GenericPacket {
             return console.error('Non-server tried to initiate game');
         }
         g_Menu.hideAllMenus();
-        toggleGameLoop();
+        g_Lobby.startGame();
     }
 }
 

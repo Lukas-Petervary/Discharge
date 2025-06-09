@@ -1,4 +1,4 @@
-import {LobbyReadyPacket} from "/PacketService.js";
+import {LobbyReadyPacket} from "/shared/PacketService.js";
 import {PlayerBody} from "../player/PlayerBody.js";
 
 export class Lobby {

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Discharge Host</title>
 
-    <link rel="stylesheet" href="host_styles.css">
+    <link rel="stylesheet" href="server/host_styles.css">
 
     <script type="importmap">
         {
@@ -18,10 +18,10 @@
 </head>
 <body data-page="server">
     <div id="connection-id"></div>
-    <button id="start-button">Start</button>
+    <button id="start-button" onclick="g_ServerLobby.startGame()">Start</button>
 
     <div id="lobby-container">
-        <div id="lobby-title">Lobby</div>
+        <div id="lobby-title">ServerLobby</div>
         <ul id="lobby-connections"></ul>
     </div>
 

@@ -11,24 +11,24 @@ export class MeshDelivery {
 
     async init() {
         await Promise.all([
-            this.m_load('dance', 'assets/models/animations/Silly Dancing.fbx'),
-            this.a_load('sit_laugh', 'assets/models/animations/Sitting Laughing.fbx'),
+            this.load_mesh('dance', 'assets/models/animations/Silly Dancing.fbx'),
+            this.load_animation('sit_laugh', 'assets/models/animations/Sitting Laughing.fbx'),
 
-            this.a_load('idle', 'assets/models/animations/idle.fbx'),
-            this.a_load('jump', 'assets/models/animations/jump.fbx'),
-            this.a_load('forward', 'assets/models/animations/Walking.fbx'),
-            this.a_load('forward run', 'assets/models/animations/Running.fbx'),
-            this.a_load('backward', 'assets/models/animations/Walking Backwards.fbx'),
-            this.a_load('backward run', 'assets/models/animations/Jog Backward.fbx'),
-            this.a_load('left', 'assets/models/animations/Left Strafe Walking.fbx'),
-            this.a_load('left run', 'assets/models/animations/Jog Strafe Left.fbx'),
-            this.a_load('right', 'assets/models/animations/Right Strafe Walk.fbx'),
-            this.a_load('right run', 'assets/models/animations/Jog Strafe Right.fbx'),
+            this.load_animation('idle', 'assets/models/animations/idle.fbx'),
+            this.load_animation('jump', 'assets/models/animations/jump.fbx'),
+            this.load_animation('forward', 'assets/models/animations/Walking.fbx'),
+            this.load_animation('forward run', 'assets/models/animations/Running.fbx'),
+            this.load_animation('backward', 'assets/models/animations/Walking Backwards.fbx'),
+            this.load_animation('backward run', 'assets/models/animations/Jog Backward.fbx'),
+            this.load_animation('left', 'assets/models/animations/Left Strafe Walking.fbx'),
+            this.load_animation('left run', 'assets/models/animations/Jog Strafe Left.fbx'),
+            this.load_animation('right', 'assets/models/animations/Right Strafe Walk.fbx'),
+            this.load_animation('right run', 'assets/models/animations/Jog Strafe Right.fbx'),
 
         ]);
     }
 
-    async m_load(name, url) {
+    async load_mesh(name, url) {
         if (this.meshes[name]) {
             console.error(`Mesh with name "${name}" already exists`);
             return;
@@ -37,7 +37,7 @@ export class MeshDelivery {
         this.meshes[name] = await this._loadFBX(url);
     }
 
-    async a_load(name, url) {
+    async load_animation(name, url) {
         if (this.animations[name]) {
             console.error(`Animation with name "${name}" already exists`);
             return;
@@ -65,7 +65,7 @@ export class MeshDelivery {
         _m.mixer = new AnimationMixer(_m);
         _m.actions = {};
         _m.currentActions = [];
-        _m.animations.forEach(clip => _m.actions[clip.name] = _m.mixer.clipAction(clip))
+        _m.animations.forEach(clip => _m.actions[clip.name] = _m.mixer.clipAction(clip));
         return _m;
     }
 

@@ -1,8 +1,5 @@
 import {ServerConnection} from "./networking/ServerConnection.js";
-import {StartGamePacket} from "/PacketService.js";
+import {ServerLobby} from "./networking/ServerLobby.js";
 
 window.g_ServerConnection = new ServerConnection();
-
-document.getElementById('start-button').onclick = () => {
-    g_ServerConnection.broadcastPacket(new StartGamePacket())
-}
+window.g_ServerLobby = new ServerLobby();

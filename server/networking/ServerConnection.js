@@ -1,4 +1,4 @@
-import {DirectConnectPacket, KickPlayerPacket, PacketManager} from '/PacketService.js';
+import {DirectConnectPacket, KickPlayerPacket, PacketManager} from '/shared/PacketService.js';
 
 export class ServerConnection {
     constructor() {
@@ -58,6 +58,7 @@ export class ServerConnection {
 
     addConnection(connection) {
         this.connections[connection.peer] = connection;
+        g_ServerLobby.addPlayer(connection);
 
         connection.on('data', data => {
             this.packetManager.handlePacket(data, connection.peer, this);
@@ -65,13 +66,14 @@ export class ServerConnection {
         const onDisconnect = () => {
             console.log(`Connection with "${connection.peer}" closed`);
             this.broadcastPacket(new KickPlayerPacket(connection.peer));
+            g_ServerLobby.removePlayer(connection.peer);
             delete this.connections[connection.peer];
         }
         connection.on('disconnect', onDisconnect.bind(this));
         connection.on('close', onDisconnect.bind(this));
     }
 
-    directConnect(peer1, peer2) {
+    directConnectPlayers(peer1, peer2) {
         this.sendPacket(peer1, new DirectConnectPacket(peer1, peer2));
         this.sendPacket(peer2, new DirectConnectPacket(peer1, peer2));
     }

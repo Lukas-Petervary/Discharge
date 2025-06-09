@@ -1,0 +1,97 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: #000;
+}
+
+#connection-id {
+    font-family: 'JetBrains Mono', monospace;
+    color: white;
+}
+
+#lobby-container {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    position: absolute;
+    width: 20rem;
+    right: 5vw;
+    top: 10vh;
+    background-color: #333;
+    font-family: 'JetBrains Mono', monospace;
+    color: white;
+    padding: 0.5rem;
+    margin-bottom: 0.25rem;
+    border-radius: 0.5rem;
+    border: 2px solid #bbb;
+}
+#lobby-title {
+    font-size: 3rem;
+}
+#lobby-join {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-evenly;
+    width: 100%;
+    margin-bottom: 0.5rem;
+}
+#lobby-join input {
+    width: 40%;
+    height: 2rem;
+    margin: 0.5rem;
+    background-color: transparent;
+    border: none;
+    border-bottom: 2px solid #bbb;
+    text-align: center;
+    color: white;
+    box-shadow: none;
+}
+#lobby-join input:focus {
+    outline: none;
+    border-bottom: 2px solid #fff;
+}
+#lobby-join input:disabled {
+    background-color: #448;
+    border: none;
+    border-bottom: 2px solid #bbb;
+    box-shadow: none;
+}
+
+#lobby-join button {
+    height: 2rem;
+    padding: 0.5rem;
+    background-color: transparent;
+}
+#lobby-join button:hover {
+    text-decoration: underline;
+}
+
+#lobby-connections {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+    width: 90%;
+    border: 2px solid #bbb;
+}
+#lobby-connections .lobby-item {
+    list-style: none;
+    width: auto;
+    font-size: 90%;
+    padding: 0.25rem;
+}
+#lobby-connections .lobby-item button {
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    margin: 0 0 0 0.5rem;
+    background-color: #fd008a;
+    border-radius: 50%;
+    font-size: clamp(80%, 0.75rem, 100%);
+    color: #fff;
+    width: 1rem;
+    height: 1rem;
+}
+.lobby-ready {color: #8afd00 !important;}
