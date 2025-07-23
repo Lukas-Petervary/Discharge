@@ -1,9 +1,10 @@
+import Logger from "./Logger.js";
+
 export class PacketManager {
     constructor() {
         this.packetHandlers = {};
         this.receivedPackets = 0;
         this.sentPackets = 0;
-        this.debugPackets = false;
 
         this.registerPackets();
     }
@@ -27,30 +28,33 @@ export class PacketManager {
     handlePacket(data, senderID, peerManager) {
         this.receivedPackets++;
         const parsedData = JSON.parse(data);
+        parsedData.receivedTime = Date.now();
         const handler = this.packetHandlers[parsedData.type];
-        if (this.debugPackets) {
-            console.log(`Incoming packet: ${parsedData.type}`, parsedData);
-        }
-        if (handler) {
-            handler(parsedData, senderID, peerManager);
-        } else {
-            console.error(`No handler for packet type: ${parsedData.type}`);
-        }
+
+        Logger.debug(`Incoming packet: ${parsedData.type}`, parsedData)
+        if (handler) handler(parsedData, senderID, peerManager);
+        else         Logger.critical(`No handler for packet type: ${parsedData.type}`);
     }
 }
 
 class GenericPacket {
     constructor(type) {
         this.type = type;
-        this.peer = document.body.dataset.page === "client" ? g_ClientConnection.peerId : g_ServerConnection.peerId;
+        this.peer = (document.body.dataset.page === "client" ? g_ClientConnection : g_ServerConnection).peerId;
+        this.sentTime = Date.now();
+        this.receivedTime = 0;
     }
 
-    // function executed server-side
-    static C2S(packet) { console.error('Generic packet executed.') }
-    // function executed client-side
-    static S2C(packet) { console.error('Generic packet executed.') }
+    static C2S(packet) { Logger.critical('Generic packet executed.') } // function executed server-side
+    static S2C(packet) { Logger.critical('Generic packet executed.') } // function executed client-side
 
-    toJSON() { return console.error('Generic packet JSONified') }
+    toJSON() {
+        return {
+            type: this.type,
+            peer: this.peer,
+            timestamp: this.sentTime
+        }
+    }
 }
 
 export class HandshakePacket extends GenericPacket {
@@ -61,8 +65,7 @@ export class HandshakePacket extends GenericPacket {
 
     toJSON() {
         return {
-            type: this.type,
-            peer: this.peer,
+            ...super.toJSON(),
             playerList: this.playerList
         };
     }
@@ -71,6 +74,16 @@ export class HandshakePacket extends GenericPacket {
         const handshakeBroadcast = new HandshakePacket();
         handshakeBroadcast.playerList = Object.keys(g_ServerConnection.connections);
         g_ServerConnection.broadcastPacket( handshakeBroadcast );
+
+        for (const peerId in g_ServerLobby.players) {
+            if (g_ServerLobby.players[peerId].lobbyReady) {
+                let packet = new LobbyReadyPacket(true);
+                packet.peer = peerId;
+                g_ServerConnection.sendPacket(senderID, packet);
+            }
+        }
+
+        g_ServerLobby.addPlayer(senderID);
     }
 
     static S2C(packet, senderID) {
@@ -91,30 +104,29 @@ export class DirectConnectPacket extends GenericPacket {
 
     toJSON() {
         return {
-            type: this.type,
-            peer: this.peer,
+            ...super.toJSON(),
             peer1: this.peer1,
             peer2: this.peer2
         };
     }
 
-    static C2S(packet, senderID) { console.warn('DirectConnect is intended S2C only.'); }
+    static C2S(packet, senderID) { Logger.warn('DirectConnect is intended S2C only.'); }
 
     static S2C(packet, senderID) {
         if (senderID !== g_ClientConnection.serverConnection.peer) {
-            console.error(`Direct Connect must be issued from server -- sender="${senderID}"`);
+            Logger.critical(`Direct Connect must be issued from server -- sender="${senderID}"`);
             return;
         }
         if (packet.peer1 === g_ClientConnection.peerId) {
             g_ClientConnection.connectToPeer(packet.peer2)
-                .then(() => console.log(`Direct Connect Success @ ID=${packet.peer2}`))
-                .catch((err) => console.warn(`Direct Connect Failure @ ID=${packet.peer2}`, err));
+                .then(() => Logger.info(`Direct Connect Success @ ID=${packet.peer2}`))
+                .catch((err) => Logger.error(`Direct Connect Failure @ ID=${packet.peer2}`, err));
         } else if (packet.peer2 === g_ClientConnection.peerId) {
             g_ClientConnection.connectToPeer(packet.peer1)
-                .then(() => console.log(`Direct Connect Success @ ID=${packet.peer1}`))
-                .catch((err) => console.warn(`Direct Connect Failure @ ID=${packet.peer1}`, err));
+                .then(() => Logger.info(`Direct Connect Success @ ID=${packet.peer1}`))
+                .catch((err) => Logger.error(`Direct Connect Failure @ ID=${packet.peer1}`, err));
         } else {
-            console.warn(`Direct Connect pair invalid "${packet.peer1}" <-> "${packet.peer2}"`);
+            Logger.warn(`Direct Connect pair invalid "${packet.peer1}" <-> "${packet.peer2}"`);
         }
     }
 }
@@ -127,8 +139,7 @@ export class MessagePacket extends GenericPacket {
 
     toJSON() {
         return {
-            type: this.type,
-            peer: this.peer,
+            ...super.toJSON(),
             message: this.message
         };
     }
@@ -151,8 +162,7 @@ export class AlertPacket extends GenericPacket {
 
     toJSON() {
         return {
-            type: this.type,
-            peer: this.peer,
+            ...super.toJSON(),
             message: this.message
         };
     }
@@ -170,19 +180,18 @@ export class LobbyReadyPacket extends GenericPacket {
 
     toJSON() {
         return {
-            type: this.type,
-            peer: this.peer,
+            ...super.toJSON(),
             ready: this.isReady
         };
     }
 
     static C2S(packet) {
-        g_ServerLobby.setPlayer(packet.ready);
+        g_ServerLobby.setPlayer(packet.peer, packet.ready);
+        g_ServerConnection.broadcastPacket(packet);
     }
 
     static S2C(packet) {
-        g_Lobby.players[packet.peer].ready = packet.ready;
-        g_Lobby.refreshLobbyUI();
+        g_Lobby.setPlayer(packet.peer, packet.ready);
     }
 }
 
@@ -194,19 +203,18 @@ export class KickPlayerPacket extends GenericPacket {
 
     toJSON() {
         return {
-            type: this.type,
-            peer: this.peer,
+            ...super.toJSON(),
             kickedPlayer: this.kickedPlayer
         }
     }
 
     static C2S(packet) {
-        console.warn(`KickPlayerPacket from ${packet.peer}, S2C only!`)
+        Logger.warn(`KickPlayerPacket from ${packet.peer}, S2C only!`)
     }
 
     static S2C(packet, senderID) {
         if (senderID !== g_ClientConnection.serverConnection.peer) {
-            console.error(`Kick Packet must be sent by server! Instead sent from ID=${senderID}`);
+            Logger.error(`Kick Packet must be sent by server! Instead sent from ID=${senderID}`);
             return;
         }
 
@@ -229,19 +237,17 @@ export class StartGamePacket extends GenericPacket {
 
     toJSON() {
         return {
-            type: this.type,
-            peer: this.peer
+            ...super.toJSON(),
         };
     }
 
     static C2S(packet) {
-        console.warn(`StartGamePacket from ${packet.peer}, S2C only!`)
+        Logger.warn(`StartGamePacket from ${packet.peer}, S2C only!`)
     }
 
     static S2C(packet, senderID) {
-        if (senderID !== g_ClientConnection.serverConnection.peer) {
-            return console.error('Non-server tried to initiate game');
-        }
+        if (senderID !== g_ClientConnection.serverConnection.peer)
+            return Logger.error('Non-server tried to initiate game');
         g_Menu.hideAllMenus();
         g_Lobby.startGame();
     }
@@ -257,8 +263,7 @@ export class PositionPacket extends GenericPacket {
 
     toJSON() {
         return {
-            type: this.type,
-            peer: this.peer,
+            ...super.toJSON(),
             pos: {x: this.pos.x, y: this.pos.y, z: this.pos.z},
             vel: {dx: this.vel.x, dy: this.vel.y, dz: this.vel.z},
             lookQuat: {x: this.lookQuat.x, y: this.lookQuat.y, z: this.lookQuat.z, w: this.lookQuat.w},
@@ -270,7 +275,7 @@ export class PositionPacket extends GenericPacket {
     }
 
     static S2C(packet) {
-        if (packet.peer === g_ClientConnection.peerId) return;
+        if (packet.peer === g_ClientConnection.peerId) return Logger.info('Attempted to set self position from packet');
 
         const player = g_Lobby.players[packet.peer];
         if ( player ) {
@@ -278,7 +283,7 @@ export class PositionPacket extends GenericPacket {
             player.playerBody.body.velocity.set(packet.vel.dx, packet.vel.dy, packet.vel.dz);
             player.playerBody.look(packet.lookQuat);
         } else {
-            console.warn(`No player found with ID="${packet.peer}"`)
+            Logger.error(`No player found with ID="${packet.peer}"`)
         }
     }
 }

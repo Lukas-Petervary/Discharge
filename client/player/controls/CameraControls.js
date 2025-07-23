@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import Logger from "../../../shared/Logger.js";
 
 export class CameraControls {
     constructor() {
@@ -24,34 +25,34 @@ export class CameraControls {
     }
 
     enable() {
-        this.isEnabled = true;
-        this.lock();
+        this.lock().then(_ => this.isEnabled = true);
     }
     disable() {
-        this.isEnabled = false;
-        this.unlock();
+        this.unlock().then(_ => this.isEnabled = false);
     }
 
-    lock() {
+    async lock() {
         if (this.onCooldown) {
-            console.warn('PointerLock API on cooldown');
+            Logger.debug('PointerLock API on cooldown');
             g_Menu.showMenu('pause-menu');
             this.isEnabled = false;
             return;
         }
 
         if (document.pointerLockElement === this.lockElement) {
-            console.warn('Cursor already locked')
+            Logger.debug('Cursor already locked')
         } else {
-            this.lockElement.requestPointerLock({ unadjustedMovement: true })
+            try {await this.lockElement.requestPointerLock({ unadjustedMovement: true });}
+            catch (e) {Logger.error(e);}
         }
     }
 
-    unlock() {
+    async unlock() {
         if (document.pointerLockElement === null) {
-            console.warn('Cursor already unlocked')
+            Logger.debug('Cursor already unlocked')
         } else {
-            document.exitPointerLock();
+            try {await document.exitPointerLock();}
+            catch (e) {Logger.error(e);}
         }
     }
 
@@ -61,7 +62,7 @@ export class CameraControls {
             this.onCooldown = true;
             setTimeout(() => {
                 this.onCooldown = false;
-                console.log('Cursor able to lock again')
+                Logger.debug('Cursor able to lock again')
             }, 1000);
             if (g_Menu.menuStack.length === 0) {
                 g_Menu.showMenu('pause-menu');
@@ -77,7 +78,7 @@ export class CameraControls {
             this.isEnabled = false;
             g_Menu.showMenu('pause-menu');
         }
-        console.trace(`PointerLock Error:`, err);
+        Logger.debug(`PointerLock Error:`, err);
     }
 
     _onmousemove(event) {

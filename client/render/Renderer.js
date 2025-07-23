@@ -58,7 +58,7 @@ export class Renderer {
 
     render(dt) {
         this.updateSkyboxPosition();
-        g_world.objects.forEach(obj => obj.render(dt, this.time.subTickTime / g_world.TICK_RATE));
+        g_world.objects.forEach(obj => obj.render(dt));
         this.sceneRenderer.render(this.scene, this.camera);
     }
 }

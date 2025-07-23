@@ -1,4 +1,5 @@
-import {DirectConnectPacket, KickPlayerPacket, PacketManager} from '../../shared/PacketService.js';
+import {DirectConnectPacket, KickPlayerPacket, PacketManager} from '../../shared/PacketManager.js';
+import Logger from '../../shared/Logger.js';
 
 export class ServerConnection {
     constructor() {
@@ -8,7 +9,7 @@ export class ServerConnection {
         this.connections = {};
         this.packetManager = new PacketManager();
 
-        this.openConnection().then(() => console.log(`Connection started with ID: ${this.peerId}`));
+        this.openConnection().then(() => Logger.info(`Connection started with ID: ${this.peerId}`));
     }
 
     r_() {
@@ -28,7 +29,7 @@ export class ServerConnection {
                 this._onConnectionSuccess();
                 return;
             } catch(err) {
-                console.error(err);
+                Logger.error(err);
                 this._onConnectionFailure();
             }
         }
@@ -38,17 +39,16 @@ export class ServerConnection {
         localStorage.setItem('serverId', this.peerId);
 
         this.peer.on('connection', connection => {
-            console.log('Incoming connection from ' + connection.peer);
+            Logger.debug('Incoming connection from ' + connection.peer);
             this.addConnection(connection);
         });
         this.peer.on('disconnect', () => {
-            console.log('Disconnected - attempting reconnect')
+            Logger.debug('Disconnected - attempting reconnect')
             this.peer.reconnect();
         });
     }
     _onConnectionFailure() {
-        if (this.peer)
-            this.peer.destroy();
+        if (this.peer) this.peer.destroy();
         delete this.peer;
         delete this.peerId;
 
@@ -58,13 +58,10 @@ export class ServerConnection {
 
     addConnection(connection) {
         this.connections[connection.peer] = connection;
-        g_ServerLobby.addPlayer(connection);
 
-        connection.on('data', data => {
-            this.packetManager.handlePacket(data, connection.peer, this);
-        });
+        connection.on('data', data => this.packetManager.handlePacket(data, connection.peer, this));
         const onDisconnect = () => {
-            console.log(`Connection with "${connection.peer}" closed`);
+            Logger.debug(`Connection with "${connection.peer}" closed`);
             this.broadcastPacket(new KickPlayerPacket(connection.peer));
             g_ServerLobby.removePlayer(connection.peer);
             delete this.connections[connection.peer];

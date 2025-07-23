@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import Logger from "../../../shared/Logger.js";
 
 class SoundProperties {
     constructor({ volume = 1, loop = false, refDistance = 10, distance = 10 } = {}) {
@@ -65,7 +66,7 @@ class AudioHandler {
                     resolve(buffer);
                 },
                 xhr => {
-                    console.log(`Loading ${url}: ${Math.floor(100 * xhr.loaded / xhr.total)}%`);
+                    Logger.info(`Loading ${url}: ${Math.floor(100 * xhr.loaded / xhr.total)}%`);
                 },
                 (err) => reject(err)
             );
@@ -84,7 +85,7 @@ class AudioHandler {
             node.play();
             return node;
         } else {
-            console.warn(`Audio buffer '${name}' not found.`);
+            Logger.warn(`Audio buffer '${name}' not found.`);
         }
     }
 
@@ -102,7 +103,7 @@ class AudioHandler {
             node.play();
             return node;
         } else {
-            console.warn(`Audio buffer '${name}' not found.`);
+            Logger.warn(`Audio buffer '${name}' not found.`);
         }
     }
 
@@ -118,16 +119,14 @@ class AudioHandler {
             node.play();
             return node;
         } else {
-            console.warn(`Audio buffer '${name}' not found.`);
+            Logger.warn(`Audio buffer '${name}' not found.`);
         }
     }
 
     // Add an audio stream for real-time audio (e.g., voice chat)
     addAudioStream(peerId, stream, position, options = new SoundProperties()) {
-        if (this.audioStreams.has(peerId)) {
-            console.warn(`Audio stream for peer '${peerId}' already exists.`);
-            return;
-        }
+        if (this.audioStreams.has(peerId))
+            return Logger.warn(`Audio stream for peer '${peerId}' already exists.`);
 
         const positionalAudio = new THREE.PositionalAudio(this.listener);
         positionalAudio.setMediaStreamSource(stream);

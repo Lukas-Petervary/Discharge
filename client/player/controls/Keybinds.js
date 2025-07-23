@@ -1,4 +1,5 @@
 import {CameraControls} from "./CameraControls.js";
+import Logger from "../../../shared/Logger.js";
 
 class KeybindManager {
     constructor() {
@@ -123,7 +124,7 @@ export const Controls = {
             }
             this.keybindManager.rebuildMap();
         } catch (e) {
-            console.error("Failed to import keybind settings:", e);
+            Logger.error("Failed to import keybind settings:", e);
         }
     },
     exportSettings() {

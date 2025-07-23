@@ -1,5 +1,6 @@
-import {LobbyReadyPacket} from "../../shared/PacketService.js";
+import {LobbyReadyPacket} from "../../shared/PacketManager.js";
 import {PlayerBody} from "../player/PlayerBody.js";
+import Logger from "../../shared/Logger.js";
 
 export class Lobby {
     constructor() {
@@ -84,27 +85,27 @@ export class Lobby {
         g_ClientConnection.sendPacket(new LobbyReadyPacket(this.lobbyReadied));
     }
 
+    setPlayer(playerId, isReady) {
+        const player = this.players[playerId];
+        if (!player) return Logger.debug(`player ${playerId} not found!`);
+        else         player.ready = isReady;
+
+        this.refreshLobbyUI();
+    }
+
     _initPlayer(peerId) {
-        console.trace();
-        if (this.players[peerId]) {
-            console.log(`Player "${peerId}" is already in the lobby`);
-            return;
-        }
+        if (this.players[peerId]) return Logger.debug(`Player "${peerId}" is already in the lobby`);
+
         this.players[peerId] = {
             name: peerId.substring(0, peerId.lastIndexOf('_')),
             id: peerId.substring(peerId.lastIndexOf('_') + 1),
             ready: false,
             playerBody: new PlayerBody(peerId.substring(0, peerId.lastIndexOf('_')))
         };
+        this.players[peerId].playerBody.body.collisionFilterGroup = g_world.collisionGroups['client'];
     }
 
     startGame() {
-        for (const player in this.players) {
-            if (!player.ready) {
-                alert('Not all players are ready!');
-                return;
-            }
-        }
         g_Menu.hideAllMenus();
         toggleGameLoop();
     }

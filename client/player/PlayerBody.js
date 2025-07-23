@@ -85,7 +85,6 @@ export class PlayerBody extends AnimatedMesh {
             this.blendAnimation(x_motion);
         }
         this.stopAnimations(anm.filter(str => str !== x_motion && str !== z_motion));
-        console.log(this.mesh.currentActions);
     }
 
     // this code is cooked, put the player model in a THREE Group to position relative to player

@@ -1,6 +1,7 @@
 import {FBXLoader} from "three/examples/jsm/loaders/FBXLoader.js";
 import {AnimationMixer} from "three";
 import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils.js"
+import Logger from "../../../shared/Logger.js";
 
 export class MeshDelivery {
     constructor() {
@@ -29,19 +30,15 @@ export class MeshDelivery {
     }
 
     async load_mesh(name, url) {
-        if (this.meshes[name]) {
-            console.error(`Mesh with name "${name}" already exists`);
-            return;
-        }
+        if (this.meshes[name])
+            return Logger.warn(`Mesh with name "${name}" already exists`);
 
         this.meshes[name] = await this._loadFBX(url);
     }
 
     async load_animation(name, url) {
-        if (this.animations[name]) {
-            console.error(`Animation with name "${name}" already exists`);
-            return;
-        }
+        if (this.animations[name])
+            return Logger.warn(`Animation with name "${name}" already exists`);
 
         this.animations[name] = await this._loadFBX(url);
     }
@@ -51,16 +48,15 @@ export class MeshDelivery {
             this.loader.load( url, (obj) => {
                 resolve(obj);
             }, xhr => {
-                console.log(`Loading ${url}: ${Math.floor(100 * xhr.loaded / xhr.total)}%`);
+                Logger.info(`Loading ${url}: ${Math.floor(100 * xhr.loaded / xhr.total)}%`);
             }, e => reject(e) );
         });
     }
 
     getMesh(name) {
         const m = this.meshes[name];
-        if (!m) {
-            return console.error(`Mesh with name "${name}" not found`);
-        }
+        if (!m) return Logger.error(`Mesh with name "${name}" not found`);
+
         const _m = SkeletonUtils.clone(m);
         _m.mixer = new AnimationMixer(_m);
         _m.actions = {};
@@ -71,14 +67,14 @@ export class MeshDelivery {
 
     staticMesh(name) {
         const m = this.meshes[name];
-        if (!m) return console.error(`Mesh with name "${name}" not found`);
+        if (!m) return Logger.error(`Mesh with name "${name}" not found`);
         return m;
     }
 
     getAnimation(name) {
         const a = this.animations[name];
         if (!a) {
-            return console.error(`Animation with name "${name}" not found`);
+            return Logger.error(`Animation with name "${name}" not found`);
         }
         const _a = SkeletonUtils.clone(a);
         _a.mixer = new AnimationMixer(_a);
@@ -90,7 +86,7 @@ export class MeshDelivery {
 
     staticAnimation(name) {
         const a = this.animations[name];
-        if (!a) return console.error(`Animation with name "${name}" not found`);
+        if (!a) return Logger.error(`Animation with name "${name}" not found`);
         return a;
     }
 }

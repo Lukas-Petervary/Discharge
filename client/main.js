@@ -10,6 +10,7 @@ import { Lobby } from "./networking/Lobby.js";
 import { MeshDelivery } from "./render/mesh/MeshDelivery.js";
 import { LightMesh } from "./render/mesh/LightMesh.js";
 import {AudioHandler} from "./player/audio/AudioHandler.js";
+import Logger from "../shared/Logger.js";
 
 async function init() {
     window.g_Menu = new MenuRegistry();
@@ -29,22 +30,6 @@ async function init() {
     window.g_Lobby = new Lobby();
 
     window.runtimeStats = new Stats();
-
-    const _originalLog = console.log;
-    const _originalWarn = console.warn;
-    const _originalError = console.error;
-    const _originalTrace = console.trace;
-
-    console.log = console.warn = console.error = console.trace = () => {};
-    window.enableDebug = () => {
-        console.log = _originalLog;
-        console.warn = _originalWarn;
-        console.error = _originalError;
-        console.trace = _originalTrace;
-        console.log("%c! DEBUG MODE ENABLED !", "background: yellow; color: black; font-size: 200%;")
-    }
-
-    enableDebug()
 
     window.dispatchEvent(new CustomEvent("finishgameload"));
 }
@@ -84,7 +69,9 @@ let running = false;
 function gameLoop() {
     if (running) requestAnimationFrame(gameLoop);
 
+    g_renderer.sceneRenderer.info.reset();
     runtimeStats.begin();
+
     g_renderer.time.deltaTime = g_renderer.clock.getDelta();
     g_renderer.time.subTickTime += g_renderer.time.deltaTime;
 
@@ -101,7 +88,7 @@ function gameLoop() {
 }
 
 await init().then(() => {
-    console.log('Finished initializing');
+    Logger.info('Finished initializing');
     window.toggleGameLoop = () => {
         if (!running) {
             running = true;

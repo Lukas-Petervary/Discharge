@@ -1,8 +1,9 @@
 import * as CANNON from 'cannon';
 import * as THREE from 'three';
 import { PlayerBody } from "./PlayerBody.js";
-import {PositionPacket} from "../../shared/PacketService.js";
+import {PositionPacket} from "../../shared/PacketManager.js";
 
+const eye_level = 0.6; // 0.6 units up from player body midline
 const maxWalkSpeed = 5;
 const maxSprintSpeed = 10;
 const acceleration = 8;
@@ -14,7 +15,6 @@ export class ClientPlayer {
             name: "",
             sensitivity: 1,
         };
-
 
         this.playerBody = new PlayerBody();
         this.playerBody.body.collisionFilterGroup = g_world.collisionGroups['client'];
@@ -37,8 +37,6 @@ export class ClientPlayer {
             this.canJump = false;
         }
     }
-
-
 
     handlePlayerMovement() {
         const moveDirection = new CANNON.Vec3(0, 0, 0);
@@ -80,7 +78,7 @@ export class ClientPlayer {
 
     updateCameraOffset(camOffset) {
         camOffset.applyEuler(g_Controls.cameraControls.lookVec);
-        const camPos = this.playerBody.mesh.position.clone().add(camOffset);
+        const camPos = this.playerBody.mesh.position.clone().add(camOffset).add(new THREE.Vector3(0, eye_level, 0));
 
         const conCam = camOffset.lengthSq() === 0 ? camPos : this.rayCastCamera(camPos);
         g_renderer.camera.position.copy(conCam);

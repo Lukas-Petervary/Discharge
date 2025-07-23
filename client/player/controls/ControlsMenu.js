@@ -8,7 +8,7 @@ export class ControlsMenu {
             g_Controls.keybindManager.keybindArray = [];
             g_Controls.keybindManager.rebuildMap();
 
-            localStorage.setItem('keybinds', null);
+            localStorage.removeItem('keybinds');
             g_Controls.initializeKeybinds();
             this.renderMenu();
         }

@@ -1,4 +1,5 @@
 import {ControlsMenu} from "../player/controls/ControlsMenu.js";
+import Logger from "../../shared/Logger.js";
 
 export class MenuRegistry {
     constructor() {
@@ -62,11 +63,11 @@ export class MenuRegistry {
 
     displayPrevMenu() {
         if (this.menuStack.length === 0) {
-            console.error(`No previous menu found`);
+            Logger.warn(`No previous menu found`);
             return;
         }
         if (this.currentMenu() === this.startMenu) {
-            console.error(`Cannot close start menu`);
+            Logger.debug(`Cannot close start menu`);
             return;
         }
 

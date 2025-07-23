@@ -1,4 +1,5 @@
-import {PacketManager, HandshakePacket} from "../../shared/PacketService.js";
+import {PacketManager, HandshakePacket} from "../../shared/PacketManager.js";
+import Logger from "../../shared/Logger.js";
 
 export default class ClientConnection {
     constructor() {
@@ -20,10 +21,7 @@ export default class ClientConnection {
     }
 
     async openConnection() {
-        if (!this.stashedId.name) {
-            console.warn("No stashed name");
-            return;
-        }
+        if (!this.stashedId.name) return Logger.critical("No stashed name");
 
         document.getElementById('player-name').disabled = true;
         const connectButton = document.getElementById('create-connection-id');
@@ -53,12 +51,12 @@ export default class ClientConnection {
             connectButton.style.backgroundColor = '#8afd00';
 
             this.peer.on('connection', connection => {
-                console.log('Incoming connection from ' + connection.peer);
+                Logger.debug('Incoming connection from ' + connection.peer);
                 this.connections[connection.peer] = connection;
                 this.sendHandshake(connection);
             });
             this.peer.on('disconnect', () => {
-                console.log('Disconnected - attempting reconnect')
+                Logger.debug('Disconnected - attempting reconnect')
                 this.peer.reconnect();
             });
 
@@ -73,7 +71,7 @@ export default class ClientConnection {
 
             document.getElementById('error-icon').style.display = 'inline-flex';
             document.getElementById('error-tooltip').textContent = err.message || "Connection Failed";
-            console.error("Peer ID check failed:", err);
+            Logger.error("Peer ID check failed:", err);
         }
         connectButton.onclick = this.retryConnection.bind(this);
     }
@@ -104,7 +102,7 @@ export default class ClientConnection {
     }
 
     printConnections() {
-        console.log(`
+        Logger.info(`
         Connections: [${[...Object.keys(g_ClientConnection.connections)]}]
         Packets Sent: ${g_ClientConnection.packetManager.sentPackets}
         Packets Received: ${g_ClientConnection.packetManager.receivedPackets}
@@ -116,7 +114,7 @@ export default class ClientConnection {
         const peerId = 'DischargeServer_'+ serverId;
 
         if (this.serverConnection != null) {
-            console.error(`Attempted connection to server ${peerId} while already connected to ${this.serverConnection.peer}`);
+            Logger.error(`Attempted connection to server ${peerId} while already connected to ${this.serverConnection.peer}`);
             return;
         }
 
@@ -125,35 +123,35 @@ export default class ClientConnection {
                 this.serverConnection = conn;
                 g_Lobby.onJoinServer();
             })
-            .catch(err => console.error('Failed to connect to server:\n', err));
+            .catch(err => Logger.error('Failed to connect to server:\n', err));
     }
 
     connectToPeer(peerId, isServer = false) {
         return new Promise((resolve, reject) => {
             if (peerId === this.peerId) {
-                console.log('Attempted self-connection');
+                Logger.warn('Attempted self-connection');
                 reject(new Error(`Self-Connection ${peerId}`));
             }
             else if (this.connections[peerId]) {
-                console.log('Already connected to ' + peerId);
+                Logger.warn('Already connected to ' + peerId);
                 reject(new Error(`Existing Connection ${peerId}`));
             }
 
             const connection = this.peer.connect(peerId);
             connection.on('open', () => {
-                console.log('Connected to ' + peerId);
+                Logger.debug('Connected to ' + peerId);
                 if (!isServer) {
                     g_Lobby._initPlayer(connection.peer);
                 }
 
                 connection.on('data', data => this.packetManager.handlePacket(data, connection.peer, this));
                 const onDisconnect = isServer ? () => {
-                    console.warn(`Connection with server terminated "${peerId}"`);
+                    Logger.warn(`Connection with server terminated "${peerId}"`);
                     delete this.serverConnection;
                     g_Lobby.players = {};
                     g_Lobby.refreshLobbyUI();
                 } : () => {
-                    console.log(`Connection closed with ID="${connection.peer}"`);
+                    Logger.debug(`Connection closed with ID="${connection.peer}"`);
                     delete this.connections[connection.peer];
                     g_Lobby.refreshLobbyUI()
                     g_Lobby.onLeave(connection.peer);
@@ -178,7 +176,7 @@ export default class ClientConnection {
     sendHandshake(connection) {
         this.packetManager.sentPackets++;
         const handshakePacket = JSON.stringify(new HandshakePacket(), null);
-        console.log(`Handshake outbound to "${connection.peer}":\n`, handshakePacket);
+        Logger.debug(`Handshake outbound to "${connection.peer}":\n`, handshakePacket);
         connection.send(handshakePacket);
     }
 

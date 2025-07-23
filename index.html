@@ -39,9 +39,9 @@
                     <div id="error-icon" style="display: none;">i<span class="tooltip-text" id="error-tooltip"></span></div>
                 </span>
                 <div id="lobby-container">
-                    <div id="lobby-title">ServerLobby</div>
+                    <div id="lobby-title">Lobby</div>
                     <span id="lobby-join">
-                        <input type="text" id="join-server-id" placeholder="ServerLobby ID" autocomplete="on">
+                        <input type="text" id="join-server-id" placeholder="Lobby ID" autocomplete="on">
                         <button onclick="g_ClientConnection.joinServer()">Join</button>
                     </span>
                     <ul id="lobby-connections"></ul>
@@ -71,7 +71,7 @@
                 <div id="controls-menu-content"></div>
                 <span>
                     <button onclick="g_Controls.exportSettings()">Save Keybinds</button>
-                    <button onclick="ControlsMenu_resetKeys()">Reset Keybinds</button>
+                    <button onclick="window.ControlsMenu_resetKeys()">Reset Keybinds</button>
                 </span>
                 <button onclick="g_Menu.displayPrevMenu()">Back</button>
             </div>

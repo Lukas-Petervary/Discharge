@@ -1,5 +1,6 @@
 import * as CANNON from "cannon";
 import * as THREE from "three";
+import Logger from "../../../shared/Logger.js";
 
 export class PhysicsMesh {
     static SHOW_WIREFRAMES = false;
@@ -30,7 +31,9 @@ export class PhysicsMesh {
         this.tickCallback(this.body, this.mesh);
     }
 
-    render(dt, subtickInterp) {
+    render(dt) {
+        const subtickInterp = g_renderer.time.subTickTime / g_world.TICK_RATE;
+
         if (PhysicsMesh.SHOW_WIREFRAMES && this.body && this.body.debugMesh) {
             this.body.debugMesh.position.copy(_pos(this.body.position));
             this.body.debugMesh.quaternion.copy(_quat(this.body.quaternion));
@@ -109,7 +112,7 @@ function createWireframe(body) {
             );
             geometry.setIndex(indices);
         } else {
-            console.warn("Shape type not supported:", shape);
+            Logger.warn("Shape type not supported:", shape);
             return;
         }
 
