@@ -180,7 +180,7 @@ export class World {
             {
                 textureWidth: 512,
                 textureHeight: 512,
-                waterNormals: new THREE.TextureLoader().load('/assets/textures/images/water_normals.jpg', _ => _.wrapS = _.wrapT = THREE.RepeatWrapping),
+                waterNormals: new THREE.TextureLoader().load('assets/textures/images/water_normals.jpg', _ => _.wrapS = _.wrapT = THREE.RepeatWrapping),
                 sunDirection: new THREE.Vector3().setFromSphericalCoords(1, Math.PI/2 - 0.01, 0),
                 sunColor: 0xFFE484,
                 distortionScale: 3.7
