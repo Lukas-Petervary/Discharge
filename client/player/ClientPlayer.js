@@ -28,7 +28,7 @@ export class ClientPlayer {
         };
 
         // Movement variables
-        this.firstPerson = true;
+        this.firstPerson = false;
         this.canJump = true;
     }
 

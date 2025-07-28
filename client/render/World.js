@@ -66,14 +66,14 @@ export class World {
 
         const geometry = new THREE.BufferGeometry();
         const _t = new THREE.TextureLoader();
-        const _gN = _t.load("../../assets/textures/images/grass_noise_map.png");
-        const _wN = _t.load("../../assets/textures/images/wind_noise_map.jpg");
-        const _c = _t.load("../../assets/textures/images/cloud_overlay.jpg");
+        const _gN = _t.load("assets/textures/images/grass_noise_map.png");
+        const _wN = _t.load("assets/textures/images/wind_noise_map.jpg");
+        const _c = _t.load("assets/textures/images/cloud_overlay.jpg");
         _gN.wrapS = _gN.wrapT = _wN.wrapS = _wN.wrapT = _c.wrapS = _c.wrapT = THREE.RepeatWrapping;
 
         const material = new THREE.ShaderMaterial({
-            vertexShader: await this.loadShader("../../assets/shaders/grass.vert"),
-            fragmentShader: await this.loadShader("../../assets/shaders/grass.frag"),
+            vertexShader: await this.loadShader("assets/shaders/grass.vert"),
+            fragmentShader: await this.loadShader("assets/shaders/grass.frag"),
             side: THREE.DoubleSide,
             shadowSide: THREE.DoubleSide,
         });
