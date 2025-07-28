@@ -13,8 +13,6 @@ export class Renderer {
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         this.sceneRenderer = new THREE.WebGLRenderer({ canvas: document.getElementById('game-canvas'), antialias: true });
 
-        this.skybox = null;
-
         this.init();
     };
 
@@ -32,32 +30,9 @@ export class Renderer {
             this.camera.updateProjectionMatrix();
             this.sceneRenderer.setSize(window.innerWidth, window.innerHeight);
         }, false);
-        this.skyBox('SkySkybox.png');
     }
-
-    skyBox(name){
-        const skyGeometry = new THREE.SphereGeometry(1000, 25, 25);
-        skyGeometry.scale(-1,1,1);
-
-        const texture = new THREE.TextureLoader().load('assets/terrain/Skyboxes/' + name);
-
-        const skyMaterial = new THREE.MeshPhongMaterial({
-            map: texture
-        });
-
-        this.skybox = new THREE.Mesh(skyGeometry, skyMaterial);
-        this.scene.add(this.skybox);
-    }
-
-    updateSkyboxPosition() {
-      if(this.skybox)
-          this.skybox.position.copy(this.camera.position);
-    }
-
-
 
     render(dt) {
-        this.updateSkyboxPosition();
         g_world.objects.forEach(obj => obj.render(dt));
         this.sceneRenderer.render(this.scene, this.camera);
     }

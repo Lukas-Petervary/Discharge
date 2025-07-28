@@ -165,7 +165,10 @@ export const Controls = {
         this.crouch = this.createKeybind(['c']);
         this.jump = this.createKeybind([' ']);
 
-        this['third person'] = this.createKeybind(['F4'], false, () => g_Client.firstPerson = !g_Client.firstPerson);
+        this['third person'] = this.createKeybind(['F4'], false, () => {
+            g_Client.firstPerson = !g_Client.firstPerson;
+            g_Client.playerBody.mesh.visible = !g_Client.firstPerson;
+        });
         this['lean left'] = this.createKeybind(['q']);
         this['lean right'] = this.createKeybind(['e']);
 

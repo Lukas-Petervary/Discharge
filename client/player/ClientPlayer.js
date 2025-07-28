@@ -3,11 +3,11 @@ import * as THREE from 'three';
 import { PlayerBody } from "./PlayerBody.js";
 import {PositionPacket} from "../../shared/PacketManager.js";
 
-const eye_level = 0.6; // 0.6 units up from player body midline
+const eye_level = 0.65; // 0.6 units up from player body midline
 const maxWalkSpeed = 5;
 const maxSprintSpeed = 10;
 const acceleration = 8;
-const jumpSpeed = 10;
+const jumpSpeed = 7;
 
 export class ClientPlayer {
     constructor() {
@@ -18,13 +18,14 @@ export class ClientPlayer {
 
         this.playerBody = new PlayerBody();
         this.playerBody.body.collisionFilterGroup = g_world.collisionGroups['client'];
-        this.playerBody.tickCallback = () => g_ClientConnection.sendPacket(
-            new PositionPacket(
-                this.playerBody.body.position,
-                this.playerBody.body.velocity,
-                this.playerBody.body.quaternion
-            )
-        );
+        const body = this.playerBody.body ?? new CANNON.Vec3();
+        this.playerBody.tickCallback = () => {
+            g_ClientConnection.sendPacket(new PositionPacket(body.position, body.velocity, body.quaternion));
+            if (body.position.y < -0.1) {
+                body.position.set(0, 2, 0);
+                body.velocity.setZero();
+            }
+        };
 
         // Movement variables
         this.firstPerson = true;

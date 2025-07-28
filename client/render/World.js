@@ -1,12 +1,16 @@
 import * as CANNON from 'cannon';
 import * as THREE from 'three';
+import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
+import {Sky} from 'three/examples/jsm/objects/Sky.js'
+import {Water} from 'three/examples/jsm/objects/Water.js'
 import {PhysicsMesh} from './mesh/PhysicsMesh.js';
-import {AnimatedMesh} from "./mesh/AnimatedMesh.js";
 import {LightMesh} from "./mesh/LightMesh.js";
+import Logger from "../../shared/Logger.js";
+import {ParticleSchema, ParticleSystem} from "./particles/ParticleManager.js";
 
 export class World {
     constructor() {
-        this.TICK_RATE = 1/60;
+        this.TICK_RATE = 1.0 / 60.0;
 
         this.world = new CANNON.World();
         this.world.gravity.set(0, -9.82, 0);
@@ -41,46 +45,155 @@ export class World {
         this.collisionGroups['player'] = 1<<2;
     }
 
-    addSphere(radius, position = {x:0,y:0,z:0}) {
-        // Cannon.js sphere
-        const sphereShape = new CANNON.Sphere(radius);
-        const sphereBody = new CANNON.Body({
-            mass: 1,
-            position: new CANNON.Vec3(position.x, position.y, position.z),
-            shape: sphereShape,
-            material: this.defaultMaterial,
-        });
-
-        // Three.js sphere
-        const sphereMesh = new THREE.Mesh(
-            new THREE.SphereGeometry(radius, 32, 32),
-            new THREE.MeshStandardMaterial({ color: 0xff0000 })
-        );
-        sphereMesh.castShadow = sphereMesh.receiveShadow = true;
-
-        // Create PhysicsObject
-        const physicsObject = new PhysicsMesh(sphereBody, sphereMesh);
-        physicsObject.add();
-        return physicsObject;
+    async loadShader(url) {
+        const res = await fetch(url);
+        if (!res.ok) return Logger.critical(`Failed to load shader: ${url}`);
+        return await res.text();
     }
 
-    addModel(name, position = {x: 0, y: 1, z: 0}) {
-        const sphereShape = new CANNON.Sphere(1);
-        const sphereBody = new CANNON.Body({
-            mass: 1,
-            position: new CANNON.Vec3(position.x, position.y, position.z),
-            shape: sphereShape,
-            material: this.defaultMaterial,
+    async createGrassParticleSystem() {
+        const blade_width = 0.1, blade_height = 0.8;
+        const positions = new Float32Array([
+            -blade_width / 2, 0, 0,
+            blade_width / 2, 0, 0,
+            0, blade_height, 0
+        ]);
+        const uvs = new Float32Array([
+            0, 0,
+            1, 0,
+            0.5, 1
+        ]);
+
+        const geometry = new THREE.BufferGeometry();
+        const _t = new THREE.TextureLoader();
+        const _gN = _t.load("/assets/textures/images/grass_noise_map.png");
+        const _wN = _t.load("/assets/textures/images/wind_noise_map.jpg");
+        const _c = _t.load("assets/textures/images/cloud_overlay.jpg");
+        _gN.wrapS = _gN.wrapT = _wN.wrapS = _wN.wrapT = _c.wrapS = _c.wrapT = THREE.RepeatWrapping;
+
+        const material = new THREE.ShaderMaterial({
+            vertexShader: await this.loadShader("/assets/shaders/grass.vert"),
+            fragmentShader: await this.loadShader("/assets/shaders/grass.frag"),
+            side: THREE.DoubleSide,
+            shadowSide: THREE.DoubleSide,
         });
 
-        const init = (body, mesh) => {
-            mesh.position.set(position.x, position.y, position.z);
-            mesh.scale.copy(new THREE.Vector3(0.01, 0.01, 0.01));
-        }
+        const schema = new ParticleSchema({}, {
+            position: {value: positions, size: 3},
+            uv: {value: uvs, size: 2},
+        }, {
+            time: { value: 0 },
+            grassNoise: { value: _gN },
+            windNoise: { value: _wN },
+            cloudShadow: { value: _c }
+        });
 
-        const physMesh = new AnimatedMesh(sphereBody, 'dance', {addCallback: init});
-        physMesh.add();
-        return physMesh;
+        const _dummy = new THREE.Object3D();
+        return new ParticleSystem({
+            name: "grass",
+            geometry,
+            material,
+            maxCount: 2 << 17, // 131072
+            schema,
+            meshOptions: {
+                castShadow: true,
+                receiveShadow: true,
+                frustumCulled: false,
+            },
+            onSpawn(i, opts, system) {
+                const r = (Math.random() - 0.5) * 2 * 25;
+                const theta = Math.random() * Math.PI * 2;
+                const position = (opts.position ?? new THREE.Vector3()).add(
+                    new THREE.Vector3(r * Math.cos(theta), 0, r * Math.sin(theta))
+                );
+
+                const scale = opts.scale ?? 0.5*Math.random() + 0.1;
+                const rotationY = opts.rotation?.y ?? Math.random() * 2 * Math.PI;
+
+                _dummy.position.copy(position);
+                _dummy.scale.setScalar(scale);
+                _dummy.rotation.set(0, rotationY, 0);
+                _dummy.updateMatrix();
+
+                system.mesh.setMatrixAt(i, _dummy.matrix);
+            },
+            onUpdate(system) {
+                system.mesh.material.uniforms.time.value += g_renderer.time.deltaTime;
+            },
+        });
+    }
+
+    addBasicScene() {
+        // lighting
+        g_renderer.scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+        const addCallback = (light) => {
+            light.castShadow = true;
+            light.position.set(5, 5, 5);
+        }
+        this.directionalLight = new LightMesh(new THREE.DirectionalLight(0xffffff, 3), {addCallback}).add();
+        const _floor_width = 25, _floor_height = 2, _floor_segments = 64;
+
+        // floor
+        const floor_body = new CANNON.Body({
+            mass: 0,
+            shape: new CANNON.Cylinder(_floor_width, _floor_width, _floor_height, _floor_segments),
+            material: this.groundMaterial,
+        });
+        floor_body.quaternion.setFromEuler(0, Math.PI / 2, 0);
+        floor_body.position.set(0, -1, 0);
+
+        const floor_mesh = new THREE.Mesh(
+            new THREE.CylinderGeometry(_floor_width, _floor_width, _floor_height, _floor_segments),
+            new THREE.MeshStandardMaterial({ color: 0x336406, flatShading: false })
+        );
+        floor_mesh.receiveShadow = true;
+        floor_mesh.position.set(0, -1, 0);
+
+        this.floor = new PhysicsMesh(floor_body, floor_mesh).add();
+
+        // particles
+        this.createGrassParticleSystem().then(system => {
+            g_ParticleManager.register(system);
+            g_ParticleManager.emit("grass",2<<17);
+        });
+
+        // sky box
+        const sky = new Sky();
+        sky.scale.setScalar(450_000);
+
+        Object.assign(sky.material.uniforms, {
+            turbidity: { value: 10 },
+            rayleigh: { value: 0.75 },
+            mieCoefficient: { value: 0.05 },
+            mieDirectionalG: { value: 0.7 },
+            azimuth: { value: 180 },
+            sunPosition: { value: new THREE.Vector3().setFromSphericalCoords(1, Math.PI/2, 0) },
+        });
+
+        this.sky_box = new PhysicsMesh(undefined, sky).add();
+
+        // water
+        const _water_geom = new THREE.PlaneGeometry(10_000, 10_000);
+
+        const water = new Water(
+            _water_geom,
+            {
+                textureWidth: 512,
+                textureHeight: 512,
+                waterNormals: new THREE.TextureLoader().load('/assets/textures/images/water_normals.jpg', _ => _.wrapS = _.wrapT = THREE.RepeatWrapping),
+                sunDirection: new THREE.Vector3().setFromSphericalCoords(1, Math.PI/2 - 0.01, 0),
+                sunColor: 0xFFE484,
+                distortionScale: 3.7
+            }
+        );
+        water.rotation.x = -Math.PI / 2;
+        water.position.y = -0.1;
+
+        this.water_plane = new PhysicsMesh(undefined, water,
+            undefined,
+            undefined,
+            (dt, body, mesh) => mesh.material.uniforms.time.value += g_renderer.time.deltaTime / 2.0
+        ).add();
     }
 
     addPlane(pos = new CANNON.Vec3(0,0,0)) {
@@ -107,7 +220,7 @@ export class World {
 
     // Function to load a GLTF model and integrate with Cannon.js for physics
     async loadGLTFModel(path) {
-        const loader = new THREE.GLTFLoader();
+        const loader = new GLTFLoader();
         loader.load(path, (gltf) => {
             const model = gltf.scene;
             model.position.set(0, 0, 0); // Ensure model is positioned correctly
@@ -139,27 +252,27 @@ export class World {
 
 
                             // Store reference to the mesh and Cannon.js body for later use
-                            g_world.objects.push({
-                                mesh: child,
-                                body: body,
-                            });
+                            // g_world.objects.push({
+                            //     mesh: child,
+                            //     body: body,
+                            // });
                         } else {
-                            console.warn('Unable to create Cannon.js shape for mesh:', child);
+                            Logger.warn('Unable to create Cannon.js shape for mesh:', child);
                         }
                     } catch (error) {
-                        console.error('Error creating Cannon.js shape:', error);
+                        Logger.error('Error creating Cannon.js shape:', error);
                     }
                 }
             });
         }, undefined, (error) => {
-            console.error('Error loading model:', error);
+            Logger.error('Error loading model:', error);
         });
     }
 
     // Function to create a Cannon.js shape from a Three.js mesh
     createCannonShape(threeMesh) {
         if (!threeMesh.geometry || !threeMesh.geometry.isBufferGeometry) {
-            console.error('Invalid or undefined BufferGeometry:', threeMesh.geometry);
+            Logger.error('Invalid or undefined BufferGeometry:', threeMesh.geometry);
             return null;
         }
 
@@ -167,7 +280,7 @@ export class World {
 
         // Ensure geometry has indices
         if (!geom.index) {
-            console.warn('Geometry does not have indices. Computing faces assuming triangle strips or other primitive types.');
+            Logger.warn('Geometry does not have indices. Computing faces assuming triangle strips or other primitive types.');
             const position = geom.attributes.position;
             const indices = [];
 
@@ -186,7 +299,7 @@ export class World {
 
         const boundingBox = geom.boundingBox;
         if (!boundingBox) {
-            console.warn('Bounding box not properly defined for geometry:', geom);
+            Logger.warn('Bounding box not properly defined for geometry:', geom);
             return null;
         }
 
@@ -195,12 +308,11 @@ export class World {
 
         // Ensure bounding box values are defined
         if (!min || !max) {
-            console.warn('Bounding box min or max not properly defined for geometry:', geom);
+            Logger.warn('Bounding box min or max not properly defined for geometry:', geom);
             return null;
         }
 
         const halfExtents = max.clone().sub(min).multiplyScalar(0.5);
-        const center = min.clone().add(halfExtents);
 
         try {
             const vertices = geom.attributes.position.array;
@@ -210,7 +322,7 @@ export class World {
             return new CANNON.Trimesh(vertices, indices);
 
         } catch (error) {
-            console.error('Error creating Cannon.js shape:', error);
+            Logger.error('Error creating Cannon.js shape:', error);
             return null;
         }
     }
@@ -219,7 +331,7 @@ export class World {
         PhysicsMesh.SHOW_WIREFRAMES = !PhysicsMesh.SHOW_WIREFRAMES;
         this.objects.forEach(object => {
             if (!object.body) return;
-            object.body.debugMesh.visible = PhysicsMesh.SHOW_WIREFRAMES;
+            object.debugMesh.visible = PhysicsMesh.SHOW_WIREFRAMES;
         })
     }
 
@@ -241,4 +353,3 @@ export class World {
         this.objects.forEach(obj => obj.update());
     }
 }
-

@@ -275,7 +275,7 @@ export class PositionPacket extends GenericPacket {
     }
 
     static S2C(packet) {
-        if (packet.peer === g_ClientConnection.peerId) return Logger.info('Attempted to set self position from packet');
+        if (packet.peer === g_ClientConnection.peerId) return;
 
         const player = g_Lobby.players[packet.peer];
         if ( player ) {

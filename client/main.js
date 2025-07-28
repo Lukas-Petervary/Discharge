@@ -1,5 +1,4 @@
 import ClientConnection from './networking/ClientConnection.js';
-import * as THREE from "three";
 import { Renderer } from "./render/Renderer.js";
 import { World } from "./render/World.js";
 import { ClientPlayer } from "./player/ClientPlayer.js";
@@ -8,9 +7,9 @@ import { Controls } from "./player/controls/Keybinds.js";
 import { Stats } from "./overlay/Stats.js";
 import { Lobby } from "./networking/Lobby.js";
 import { MeshDelivery } from "./render/mesh/MeshDelivery.js";
-import { LightMesh } from "./render/mesh/LightMesh.js";
 import {AudioHandler} from "./player/audio/AudioHandler.js";
 import Logger from "../shared/Logger.js";
+import {ParticleManager} from "./render/particles/ParticleManager.js";
 
 async function init() {
     window.g_Menu = new MenuRegistry();
@@ -29,26 +28,23 @@ async function init() {
     window.g_ClientConnection = new ClientConnection();
     window.g_Lobby = new Lobby();
 
+    window.g_ParticleManager = new ParticleManager();
+    // TODO: Create global registry of all registered particles
+
     window.runtimeStats = new Stats();
 
     window.dispatchEvent(new CustomEvent("finishgameload"));
 }
 
 function onStart() {
-    g_world.addPlane();
-
     runtimeStats.showPanel(0);
     runtimeStats.dom.style.display = 'none';
     document.body.appendChild(runtimeStats.dom);
 
     g_Menu.showMenu('start-menu');
 
-    g_renderer.scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-    const callback = (light) => {
-        light.castShadow = true;
-        light.position.set(5, 5, 5);
-    }
-    const directionalLight = new LightMesh(new THREE.DirectionalLight(0xffffff, 3), {addCallback: callback}).add();
+    g_world.addBasicScene();
+
 
     window.addEventListener('beforeunload', (event) => {
         event.preventDefault();
@@ -63,6 +59,7 @@ function onStart() {
 function render(dt) {
     g_renderer.render(dt);
     g_Client.moveCamera();
+    g_ParticleManager.update(dt);
 }
 
 let running = false;

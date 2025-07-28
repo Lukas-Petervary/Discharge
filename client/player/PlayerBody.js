@@ -5,7 +5,7 @@ import {AnimatedMesh} from "../render/mesh/AnimatedMesh.js";
 const anm = ['idle', 'crouch', 'forward run', 'forward', 'backward run', 'backward', 'left run', 'left', 'right run', 'right'];
 
 const height = 2;
-const radius = 0.75;
+const radius = 0.375;
 const crouchHeight = 1;
 
 export class PlayerBody extends AnimatedMesh {
@@ -121,7 +121,7 @@ export class PlayerBody extends AnimatedMesh {
 
         const cylinder = new CANNON.Cylinder(radius, radius, height - 2 * radius, 8);
         const cylinderQuaternion = new CANNON.Quaternion();
-        cylinderQuaternion.setFromEuler(Math.PI / 2, 0, 0);  // Rotate so it's vertical
+        cylinderQuaternion.setFromEuler(0, Math.PI / 2, 0);  // Rotate so it's vertical
         capsuleBody.addShape(cylinder, new CANNON.Vec3(0, 0, 0), cylinderQuaternion);
 
         const B_sphereTop = new CANNON.Sphere(radius);

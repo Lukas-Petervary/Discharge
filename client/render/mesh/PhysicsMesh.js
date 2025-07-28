@@ -7,6 +7,7 @@ export class PhysicsMesh {
     constructor(body, mesh, addCallback = (body,mesh)=>{}, tickCallback = (body,mesh)=>{}, renderCallback = (dt,body,mesh)=>{}) {
         this.body = body;
         this.mesh = mesh;
+        this.debugMesh = undefined;
         this.addCallback = addCallback;
         this.tickCallback = tickCallback;
         this.renderCallback = renderCallback;
@@ -17,10 +18,10 @@ export class PhysicsMesh {
             this.addCallback(this.body, this.mesh);
 
         if (this.body) {
-            this.body.debugMesh = createWireframe(this.body);
-            this.body.debugMesh.visible = PhysicsMesh.SHOW_WIREFRAMES;
+            this.debugMesh = createWireframe(this.body);
+            this.debugMesh.visible = PhysicsMesh.SHOW_WIREFRAMES;
             g_world.world.addBody(this.body);
-            g_renderer.scene.add(this.body.debugMesh);
+            g_renderer.scene.add(this.debugMesh);
         }
         if (this.mesh) g_renderer.scene.add(this.mesh);
         g_world.objects.push(this);
@@ -34,12 +35,12 @@ export class PhysicsMesh {
     render(dt) {
         const subtickInterp = g_renderer.time.subTickTime / g_world.TICK_RATE;
 
-        if (PhysicsMesh.SHOW_WIREFRAMES && this.body && this.body.debugMesh) {
-            this.body.debugMesh.position.copy(_pos(this.body.position));
-            this.body.debugMesh.quaternion.copy(_quat(this.body.quaternion));
+        if (PhysicsMesh.SHOW_WIREFRAMES && this.body && this.debugMesh) {
+            this.debugMesh.position.copy(_pos(this.body.position));
+            this.debugMesh.quaternion.copy(_quat(this.body.quaternion));
         }
 
-        if (this.mesh) {
+        if (this.mesh && this.body) {
             this.mesh.position.lerpVectors(
                 _pos(this.body.previousPosition),
                 _pos(this.body.position),
@@ -84,7 +85,7 @@ function createWireframe(body) {
         } else if (shape instanceof CANNON.Cylinder) {
             const { radiusTop, radiusBottom, height, numSegments } = shape;
             geometry = new THREE.CylinderGeometry(radiusTop, radiusBottom, height, numSegments);
-            geometry.rotateX(Math.PI / 2);
+            geometry.rotateY(Math.PI / 2);
         } else if (shape instanceof CANNON.ConvexPolyhedron) {
             const vertices = shape.vertices.map(v => new THREE.Vector3(v.x, v.y, v.z));
             const indices = [];
