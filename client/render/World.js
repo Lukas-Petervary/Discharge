@@ -66,14 +66,14 @@ export class World {
 
         const geometry = new THREE.BufferGeometry();
         const _t = new THREE.TextureLoader();
-        const _gN = _t.load("/assets/textures/images/grass_noise_map.png");
-        const _wN = _t.load("/assets/textures/images/wind_noise_map.jpg");
-        const _c = _t.load("assets/textures/images/cloud_overlay.jpg");
+        const _gN = _t.load("../../assets/textures/images/grass_noise_map.png");
+        const _wN = _t.load("../../assets/textures/images/wind_noise_map.jpg");
+        const _c = _t.load("../../assets/textures/images/cloud_overlay.jpg");
         _gN.wrapS = _gN.wrapT = _wN.wrapS = _wN.wrapT = _c.wrapS = _c.wrapT = THREE.RepeatWrapping;
 
         const material = new THREE.ShaderMaterial({
-            vertexShader: await this.loadShader("/assets/shaders/grass.vert"),
-            fragmentShader: await this.loadShader("/assets/shaders/grass.frag"),
+            vertexShader: await this.loadShader("../../assets/shaders/grass.vert"),
+            fragmentShader: await this.loadShader("../../assets/shaders/grass.frag"),
             side: THREE.DoubleSide,
             shadowSide: THREE.DoubleSide,
         });
@@ -93,7 +93,7 @@ export class World {
             name: "grass",
             geometry,
             material,
-            maxCount: 2 << 17, // 131072
+            maxCount: (1 << 20) - 1,
             schema,
             meshOptions: {
                 castShadow: true,
@@ -126,14 +126,14 @@ export class World {
     addBasicScene() {
         // lighting
         g_renderer.scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-        const addCallback = (light) => {
-            light.castShadow = true;
-            light.position.set(5, 5, 5);
-        }
-        this.directionalLight = new LightMesh(new THREE.DirectionalLight(0xffffff, 3), {addCallback}).add();
-        const _floor_width = 25, _floor_height = 2, _floor_segments = 64;
+        // const addCallback = (light) => {
+        //     light.castShadow = true;
+        //     light.position.set(5, 5, 5);
+        // }
+        // this.directionalLight = new LightMesh(new THREE.DirectionalLight(0xffffff, 3), {addCallback}).add();
 
         // floor
+        const _floor_width = 25, _floor_height = 2, _floor_segments = 64;
         const floor_body = new CANNON.Body({
             mass: 0,
             shape: new CANNON.Cylinder(_floor_width, _floor_width, _floor_height, _floor_segments),
@@ -154,7 +154,7 @@ export class World {
         // particles
         this.createGrassParticleSystem().then(system => {
             g_ParticleManager.register(system);
-            g_ParticleManager.emit("grass",2<<17);
+            g_ParticleManager.emit("grass",system.maxCount);
         });
 
         // sky box
